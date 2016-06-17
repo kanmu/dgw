@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/achiku/varfmt"
 	"github.com/pkg/errors"
 )
 
@@ -105,4 +106,156 @@ func PgLoadTableDef(db Queryer, schema string) ([]*PgTable, error) {
 		tbs = append(tbs, t)
 	}
 	return tbs, nil
+}
+
+// StructField go struct field
+type StructField struct {
+	Name   string
+	Type   string
+	Tag    string
+	NilVal string
+}
+
+// Struct go struct
+type Struct struct {
+	Fields []*StructField
+}
+
+// PgColToField converts pg column to go struct field
+func PgColToField(col *PgColumn) (*StructField, error) {
+	stfName := varfmt.PublicVarName(col.Name)
+	stfType, nilVal := PgConvertType(col)
+	stf := &StructField{Name: stfName, Type: stfType, NilVal: nilVal}
+	return stf, nil
+}
+
+// PgConvertType converts type
+func PgConvertType(col *PgColumn) (string, string) {
+
+	nilVal := "nil"
+	var typ string
+	switch col.DataType {
+	case "boolean":
+		nilVal = "false"
+		typ = "bool"
+		if !col.NotNull {
+			nilVal = "sql.NullBool{}"
+			typ = "sql.NullBool"
+		}
+
+	case "character", "character varying", "text", "money":
+		nilVal = `""`
+		typ = "string"
+		if !col.NotNull {
+			nilVal = "sql.NullString{}"
+			typ = "sql.NullString"
+		}
+
+	case "smallint":
+		nilVal = "0"
+		typ = "int16"
+		if !col.NotNull {
+			nilVal = "sql.NullInt64{}"
+			typ = "sql.NullInt64"
+		}
+	case "integer":
+		nilVal = "0"
+		typ = "int"
+		if !col.NotNull {
+			nilVal = "sql.NullInt64{}"
+			typ = "sql.NullInt64"
+		}
+	case "bigint":
+		nilVal = "0"
+		typ = "int64"
+		if !col.NotNull {
+			nilVal = "sql.NullInt64{}"
+			typ = "sql.NullInt64"
+		}
+
+	case "smallserial":
+		nilVal = "0"
+		typ = "uint16"
+		if !col.NotNull {
+			nilVal = "sql.NullInt64{}"
+			typ = "sql.NullInt64"
+		}
+	case "serial":
+		nilVal = "0"
+		typ = "uint32"
+		if !col.NotNull {
+			nilVal = "sql.NullInt64{}"
+			typ = "sql.NullInt64"
+		}
+	case "bigserial":
+		nilVal = "0"
+		typ = "uint64"
+		if !col.NotNull {
+			nilVal = "sql.NullInt64{}"
+			typ = "sql.NullInt64"
+		}
+
+	case "real":
+		nilVal = "0.0"
+		typ = "float32"
+		if !col.NotNull {
+			nilVal = "sql.NullFloat64{}"
+			typ = "sql.NullFloat64"
+		}
+	case "numeric", "double precision":
+		nilVal = "0.0"
+		typ = "float64"
+		if !col.NotNull {
+			nilVal = "sql.NullFloat64{}"
+			typ = "sql.NullFloat64"
+		}
+
+	case "bytea":
+		typ = "byte"
+
+	case "timestamp with time zone":
+		typ = "time.Time"
+		if !col.NotNull {
+			nilVal = "pq.NullTime{}"
+			typ = "pq.NullTime"
+		}
+
+	case "date":
+		typ = "time.Time"
+		if !col.NotNull {
+			nilVal = "pq.NullTime{}"
+			typ = "pq.NullTime"
+		}
+
+	case "time with time zone", "time without time zone", "timestamp without time zone":
+		nilVal = "0"
+		typ = "int64"
+		if !col.NotNull {
+			nilVal = "sql.NullInt64{}"
+			typ = "sql.NullInt64"
+		}
+
+	case "interval":
+		typ = "*time.Duration"
+
+	case `"char"`, "bit":
+		// FIXME: this needs to actually be tested ...
+		// i think this should be 'rune' but I don't think database/sql
+		// supports 'rune' as a type?
+		//
+		// this is mainly here because postgres's pg_catalog.* meta tables have
+		// this as a type.
+		//typ = "rune"
+		nilVal = `uint8(0)`
+		typ = "uint8"
+	case `"any"`, "bit varying":
+		typ = "byte"
+	default:
+		typ = "interface{}"
+	}
+	return typ, nilVal
+}
+
+func pgLoadTypeMapp(col *PgColumn) (string, string) {
+	return "", ""
 }

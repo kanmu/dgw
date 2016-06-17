@@ -1,2 +1,3 @@
 gom 'github.com/pkg/errors'
 gom 'github.com/lib/pq'
+gom 'github.com/achiku/varfmt'

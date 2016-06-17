@@ -1,0 +1,24 @@
+[string_notnull]
+db_types = ["character", "character varying", "text", "money"]
+go_type = "string"
+nil_value= "\"\""
+
+[string_nullable]
+db_types = ["character", "character varying", "text", "money"]
+go_type = "sql.NullString"
+nil_value= "\"\""
+
+[time_notnull]
+db_types = ["time with time zone", "time without time zone", "timestamp without time zone", "timestamp with time zone"]
+go_type = "time.Time"
+nil_value= "0"
+
+[bool_notnull]
+db_types = ["boolean"]
+go_type = "boole"
+nil_value= "false"
+
+[bool_nullable]
+db_types = ["boolean"]
+go_type = "boole"
+nil_value= "false"

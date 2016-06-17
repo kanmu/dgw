@@ -59,3 +59,26 @@ func TestPgLoadTableDef(t *testing.T) {
 		t.Logf("%+v", tbl)
 	}
 }
+
+func TestPgColToField(t *testing.T) {
+	conn, cleanup := testPgSetup(t)
+	defer cleanup()
+
+	schema := "public"
+	table := "t1"
+	cols, err := PgLoadColumnDef(conn, schema, table)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, c := range cols {
+		s, err := PgColToField(c)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("%+v", s)
+	}
+}
+
+func TestPgLoadTypeMap(t *testing.T) {
+}

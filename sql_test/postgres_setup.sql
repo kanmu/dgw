@@ -7,6 +7,7 @@ CREATE TABLE t1 (
   , str text not null
   , t_with_tz timestamp without time zone not null
   , t_without_tz timestamp with time zone not null
+  , tm time
 );
 
 CREATE TABLE t2 (
