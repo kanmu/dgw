@@ -1,10 +1,17 @@
 language: go
 
 go:
-    - 1.6
-    - tip
+  - 1.6
+  - tip
+
+services:
+  - postgresql
+
+before_script:
+  - psql -c 'CREATE USER dgw_test;' -U postgres
+  - psql -c 'CREATE DATABASE dgw_test OWNER dgw_test;' -U postgres
 
 script:
-    - go get -u github.com/mattn/gom 
-    - gom install
-    - go test -v
+  - go get -u github.com/mattn/gom 
+  - gom install
+  - go test -v
