@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/BurntSushi/toml"
 	"github.com/achiku/varfmt"
 	"github.com/pkg/errors"
 )
@@ -256,6 +257,22 @@ func PgConvertType(col *PgColumn) (string, string) {
 	return typ, nilVal
 }
 
-func pgLoadTypeMapp(col *PgColumn) (string, string) {
-	return "", ""
+// TypeMap go/db type map struct
+type TypeMap struct {
+	DBTypes          []string `toml:"db_types"`
+	NotNullGoType    string   `toml:"notnull_go_type"`
+	NotNullNilValue  string   `toml:"notnull_nil_value"`
+	NullableGoType   string   `toml:"nullable_go_type"`
+	NullableNilValue string   `toml:"nullable_nil_value"`
+}
+
+// TypeMapConfig go/db type map struct toml config
+type TypeMapConfig map[string]TypeMap
+
+func pgLoadTypeMap(filePath string) (TypeMapConfig, error) {
+	var conf TypeMapConfig
+	if _, err := toml.DecodeFile(filePath, &conf); err != nil {
+		return nil, errors.Wrap(err, "faild to parse config file")
+	}
+	return conf, nil
 }

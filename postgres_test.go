@@ -9,11 +9,11 @@ import (
 )
 
 // before running test, create user and database
-// CREATE USER tdgw_test;
-// CREATE DATABASE  tdgw_test OWNER tdgw_test;
+// CREATE USER dgw_test;
+// CREATE DATABASE  dgw_test OWNER dgw_test;
 
 func testPgSetup(t *testing.T) (*sql.DB, func()) {
-	conn, err := sql.Open("postgres", "user=tdgw_test dbname=tdgw_test sslmode=disable")
+	conn, err := sql.Open("postgres", "user=dgw_test dbname=dgw_test sslmode=disable")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,4 +81,12 @@ func TestPgColToField(t *testing.T) {
 }
 
 func TestPgLoadTypeMap(t *testing.T) {
+	f := "./postgres_type_map.toml"
+	c, err := pgLoadTypeMap(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for k, v := range c {
+		t.Logf("%+v, %+v", k, v)
+	}
 }
