@@ -1,0 +1,10 @@
+language: go
+
+go:
+    - 1.6
+    - tip
+
+script:
+    - go get -u github.com/mattn/gom 
+    - gom install
+    - go test -v
