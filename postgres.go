@@ -56,8 +56,6 @@ type TypeMap struct {
 // PgTypeMapConfig go/db type map struct toml config
 type PgTypeMapConfig map[string]TypeMap
 
-var pgTypeMapConfig PgTypeMapConfig
-
 // PgTable postgres table
 type PgTable struct {
 	Schema   string
@@ -234,6 +232,26 @@ func PgExecuteStructTmpl(st *Struct) ([]byte, error) {
 }
 
 // PgCreateStruct creates struct from given schema
-func PgCreateStruct(db Queryer, schema string) (string, error) {
-	return "", nil
+func PgCreateStruct(db Queryer, schema, typeMapPath string) ([]byte, error) {
+	var src []byte
+	tbls, err := PgLoadTableDef(db, schema)
+	if err != nil {
+		return src, errors.Wrap(err, "faield to load table definitions")
+	}
+	cfg := &PgTypeMapConfig{}
+	if _, err := toml.Decode(typeMap, cfg); err != nil {
+		return src, errors.Wrap(err, "faield to read type map")
+	}
+	for _, tbl := range tbls {
+		st, err := PgTableToStruct(tbl, cfg)
+		if err != nil {
+			return src, errors.Wrap(err, "faield to convert table definition to struct")
+		}
+		s, err := PgExecuteStructTmpl(st)
+		if err != nil {
+			return src, errors.Wrap(err, "faield to execute template")
+		}
+		src = append(src, s...)
+	}
+	return src, nil
 }
