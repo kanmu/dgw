@@ -1,8 +1,11 @@
 package tdgw
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
+	"go/format"
+	"html/template"
 	"sort"
 
 	"github.com/BurntSushi/toml"
@@ -57,6 +60,7 @@ var pgTypeMapConfig PgTypeMapConfig
 
 // PgTable postgres table
 type PgTable struct {
+	Schema   string
 	Name     string
 	DataType string
 	Columns  []*PgColumn
@@ -72,7 +76,8 @@ type PgColumn struct {
 	IsPrimaryKey bool
 }
 
-func pgLoadTypeMap(filePath string) (*PgTypeMapConfig, error) {
+// PgLoadTypeMapFromFile load type map from toml file
+func PgLoadTypeMapFromFile(filePath string) (*PgTypeMapConfig, error) {
 	var conf PgTypeMapConfig
 	if _, err := toml.DecodeFile(filePath, &conf); err != nil {
 		return nil, errors.Wrap(err, "faild to parse config file")
@@ -114,7 +119,7 @@ func PgLoadTableDef(db Queryer, schema string) ([]*PgTable, error) {
 	}
 	tbs := []*PgTable{}
 	for tbDefs.Next() {
-		t := &PgTable{}
+		t := &PgTable{Schema: schema}
 		err := tbDefs.Scan(
 			&t.DataType,
 			&t.Name,
@@ -143,9 +148,11 @@ type StructField struct {
 
 // Struct go struct
 type Struct struct {
-	Name    string
-	Comment string
-	Fields  []*StructField
+	Name      string
+	TableName string
+	Schema    string
+	Comment   string
+	Fields    []*StructField
 }
 
 func contains(v string, l []string) bool {
@@ -182,7 +189,7 @@ func PgColToField(col *PgColumn, typeCfg *PgTypeMapConfig) (*StructField, error)
 }
 
 const structTmpl = `
-// {{ .Name }} represents
+// {{ .Name }} represents {{ .Schema }}.{{ .TableName }}
 type {{ .Name }} struct {
 {{- range .Fields }}
 	{{ .Name }} {{ .Type }} // {{ .Col.Name }}
@@ -191,15 +198,42 @@ type {{ .Name }} struct {
 
 // PgTableToStruct converts table def to go struct
 func PgTableToStruct(t *PgTable, typeCfg *PgTypeMapConfig) (*Struct, error) {
-	s := &Struct{Name: varfmt.PublicVarName(t.Name)}
+	s := &Struct{
+		Name:      varfmt.PublicVarName(t.Name),
+		TableName: t.Name,
+		Schema:    t.Schema,
+	}
 	var fs []*StructField
 	for _, c := range t.Columns {
 		f, err := PgColToField(c, typeCfg)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "faield to convert col to field")
 		}
 		fs = append(fs, f)
 	}
 	s.Fields = fs
 	return s, nil
+}
+
+// PgExecuteStructTmpl execute struct template with *Struct
+func PgExecuteStructTmpl(st *Struct) ([]byte, error) {
+	var src []byte
+	tpl, err := template.New("struct").Parse(structTmpl)
+	if err != nil {
+		return src, errors.Wrap(err, "failed to parse template")
+	}
+	buf := new(bytes.Buffer)
+	if err := tpl.Execute(buf, st); err != nil {
+		return src, errors.Wrap(err, "failed to execute template")
+	}
+	src, err = format.Source(buf.Bytes())
+	if err != nil {
+		return src, errors.Wrap(err, "failed to format source code")
+	}
+	return src, nil
+}
+
+// PgCreateStruct creates struct from given schema
+func PgCreateStruct(db Queryer, schema string) (string, error) {
+	return "", nil
 }

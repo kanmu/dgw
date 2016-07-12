@@ -2,9 +2,7 @@ package tdgw
 
 import (
 	"database/sql"
-	"html/template"
 	"io/ioutil"
-	"os"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -73,7 +71,7 @@ func TestPgColToField(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := "./postgres_type_map.toml"
-	cfg, err := pgLoadTypeMap(path)
+	cfg, err := PgLoadTypeMapFromFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +87,7 @@ func TestPgColToField(t *testing.T) {
 
 func TestPgLoadTypeMap(t *testing.T) {
 	f := "./postgres_type_map.toml"
-	c, err := pgLoadTypeMap(f)
+	c, err := PgLoadTypeMapFromFile(f)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,7 +106,7 @@ func TestPgTableToStruct(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := "./postgres_type_map.toml"
-	cfg, err := pgLoadTypeMap(path)
+	cfg, err := PgLoadTypeMapFromFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,12 +115,10 @@ func TestPgTableToStruct(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		tpl, err := template.New("struct").Parse(structTmpl)
+		src, err := PgExecuteStructTmpl(st)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := tpl.Execute(os.Stdout, st); err != nil {
-			t.Fatal(err)
-		}
+		t.Logf("%s", src)
 	}
 }

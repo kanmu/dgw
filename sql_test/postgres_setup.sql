@@ -5,6 +5,7 @@ CREATE TABLE t1 (
   id bigserial primary key
   , i integer not null unique
   , str text not null
+  , nullable_str text
   , t_with_tz timestamp without time zone not null
   , t_without_tz timestamp with time zone not null
   , tm time
