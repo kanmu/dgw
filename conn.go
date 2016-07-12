@@ -1,4 +1,4 @@
-package tdgw
+package dgw
 
 import "database/sql"
 
