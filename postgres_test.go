@@ -2,7 +2,9 @@ package tdgw
 
 import (
 	"database/sql"
+	"html/template"
 	"io/ioutil"
+	"os"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -70,13 +72,18 @@ func TestPgColToField(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	path := "./postgres_type_map.toml"
+	cfg, err := pgLoadTypeMap(path)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, c := range cols {
-		s, err := PgColToField(c)
+		f, err := PgColToField(c, cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Logf("%+v", s)
+		t.Logf("%+v", f)
 	}
 }
 
@@ -86,7 +93,36 @@ func TestPgLoadTypeMap(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for k, v := range c {
+	for k, v := range *c {
 		t.Logf("%+v, %+v", k, v)
+	}
+}
+
+func TestPgTableToStruct(t *testing.T) {
+	conn, cleanup := testPgSetup(t)
+	defer cleanup()
+
+	schema := "public"
+	tbls, err := PgLoadTableDef(conn, schema)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := "./postgres_type_map.toml"
+	cfg, err := pgLoadTypeMap(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tbl := range tbls {
+		st, err := PgTableToStruct(tbl, cfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		tpl, err := template.New("struct").Parse(structTmpl)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := tpl.Execute(os.Stdout, st); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
