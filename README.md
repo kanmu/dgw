@@ -12,7 +12,7 @@ This tool generates Table/Row Data Gateway Golang struct from PostgreSQL tables.
 ## Installation
 
 ```
-go get -u github.com/achiku/dgw
+go get -u github.com/achiku/dgw/cmd/dgw
 ```
 
 
