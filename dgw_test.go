@@ -17,7 +17,7 @@ func testPgSetup(t *testing.T) (*sql.DB, func()) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	setupSQL, err := ioutil.ReadFile("./sql_test/postgres_setup.sql")
+	setupSQL, err := ioutil.ReadFile("./dgw_test.sql")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func TestPgColToField(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := "./postgres_type_map.toml"
+	path := "./typemap.toml"
 	cfg, err := PgLoadTypeMapFromFile(path)
 	if err != nil {
 		t.Fatal(err)
@@ -86,7 +86,7 @@ func TestPgColToField(t *testing.T) {
 }
 
 func TestPgLoadTypeMap(t *testing.T) {
-	f := "./postgres_type_map.toml"
+	f := "./typemap.toml"
 	c, err := PgLoadTypeMapFromFile(f)
 	if err != nil {
 		t.Fatal(err)
@@ -105,7 +105,7 @@ func TestPgTableToStruct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := "./postgres_type_map.toml"
+	path := "./typemap.toml"
 	cfg, err := PgLoadTypeMapFromFile(path)
 	if err != nil {
 		t.Fatal(err)
