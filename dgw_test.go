@@ -70,7 +70,7 @@ func TestPgColToField(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := "./typemap.toml"
+	path := "./mapconfig/typemap.toml"
 	cfg, err := PgLoadTypeMapFromFile(path)
 	if err != nil {
 		t.Fatal(err)
@@ -86,8 +86,8 @@ func TestPgColToField(t *testing.T) {
 }
 
 func TestPgLoadTypeMap(t *testing.T) {
-	f := "./typemap.toml"
-	c, err := PgLoadTypeMapFromFile(f)
+	path := "./mapconfig/typemap.toml"
+	c, err := PgLoadTypeMapFromFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +105,7 @@ func TestPgTableToStruct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := "./typemap.toml"
+	path := "./mapconfig/typemap.toml"
 	cfg, err := PgLoadTypeMapFromFile(path)
 	if err != nil {
 		t.Fatal(err)
