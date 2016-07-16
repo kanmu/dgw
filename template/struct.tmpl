@@ -1,0 +1,6 @@
+// {{ .Name }} represents {{ .Schema }}.{{ .TableName }}
+type {{ .Name }} struct {
+{{- range .Fields }}
+	{{ .Name }} {{ .Type }} // {{ .ColName }}
+{{- end }}
+}

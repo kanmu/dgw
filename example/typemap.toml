@@ -1,6 +1,3 @@
-package main
-
-const typeMap = `
 [string]
 db_types = ["character", "character varying", "text", "money"]
 notnull_go_type = "string"
@@ -69,10 +66,17 @@ nullable_nil_value= "sql.NullFloat64{}"
 
 [numeric]
 db_types = ["numeric", "double precision"]
-notnull_go_type = "float64"
-notnull_nil_value= "0.0"
-nullable_go_type = "sql.NullFloat64"
-nullable_nil_value= "sql.NullFloat64{}"
+notnull_go_type = "decimal.Decimal"
+notnull_nil_value= "0"
+nullable_go_type = "decimal.Decimal"
+nullable_nil_value= "0"
+
+[json]
+db_types = ["json"]
+notnull_go_type = "[]byte"
+notnull_nil_value= "\"\""
+nullable_go_type = "[]byte"
+nullable_nil_value= "\"\""
 
 [bytea]
 db_types = ["bytea"]
@@ -93,4 +97,4 @@ db_types = ["*"]
 notnull_go_type = "interface{}"
 notnull_nil_value= "nil"
 nullable_go_type = "interface{}"
-`
+nullable_nil_value= "nil"

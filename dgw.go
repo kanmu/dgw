@@ -1,4 +1,5 @@
-package dgw
+// go:generate go-bindata -o bindata.go template mapconfig
+package main
 
 import (
 	"bytes"
@@ -239,8 +240,14 @@ func PgCreateStruct(db Queryer, schema, typeMapPath string) ([]byte, error) {
 		return src, errors.Wrap(err, "faield to load table definitions")
 	}
 	cfg := &PgTypeMapConfig{}
-	if _, err := toml.Decode(typeMap, cfg); err != nil {
-		return src, errors.Wrap(err, "faield to read type map")
+	if typeMapPath == "" {
+		if _, err := toml.Decode(typeMap, cfg); err != nil {
+			return src, errors.Wrap(err, "faield to read type map")
+		}
+	} else {
+		if _, err := toml.DecodeFile(typeMapPath, cfg); err != nil {
+			return src, errors.Wrap(err, fmt.Sprintf("failed to decode type map file %s", typeMapPath))
+		}
 	}
 	for _, tbl := range tbls {
 		st, err := PgTableToStruct(tbl, cfg)

@@ -17,9 +17,9 @@ nullable_nil_value= "0"
 
 [bool]
 db_types = ["boolean"]
-notnull_go_type = "boole"
+notnull_go_type = "bool"
 notnull_nil_value= "false"
-nullable_go_type = "boole"
+nullable_go_type = "bool"
 nullable_nil_value= "false"
 
 [smallint]
