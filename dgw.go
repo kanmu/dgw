@@ -62,6 +62,7 @@ type PgTable struct {
 	Schema   string
 	Name     string
 	DataType string
+	AutoPk   bool
 	Columns  []*PgColumn
 }
 
@@ -73,6 +74,23 @@ type PgColumn struct {
 	NotNull      bool
 	DefaultValue sql.NullString
 	IsPrimaryKey bool
+}
+
+// Struct go struct
+type Struct struct {
+	Name    string
+	Table   *PgTable
+	Comment string
+	Fields  []*StructField
+}
+
+// StructField go struct field
+type StructField struct {
+	Name   string
+	Type   string
+	Tag    string
+	NilVal string
+	Column *PgColumn
 }
 
 // PgLoadTypeMapFromFile load type map from toml file
@@ -136,24 +154,6 @@ func PgLoadTableDef(db Queryer, schema string) ([]*PgTable, error) {
 	return tbs, nil
 }
 
-// StructField go struct field
-type StructField struct {
-	Name   string
-	Type   string
-	Tag    string
-	NilVal string
-	Col    *PgColumn
-}
-
-// Struct go struct
-type Struct struct {
-	Name      string
-	TableName string
-	Schema    string
-	Comment   string
-	Fields    []*StructField
-}
-
 func contains(v string, l []string) bool {
 	sort.Strings(l)
 	i := sort.SearchStrings(l, v)
@@ -183,24 +183,15 @@ func PgConvertType(col *PgColumn, typeCfg *PgTypeMapConfig) (string, string) {
 func PgColToField(col *PgColumn, typeCfg *PgTypeMapConfig) (*StructField, error) {
 	stfName := varfmt.PublicVarName(col.Name)
 	stfType, nilVal := PgConvertType(col, typeCfg)
-	stf := &StructField{Name: stfName, Type: stfType, NilVal: nilVal, Col: col}
+	stf := &StructField{Name: stfName, Type: stfType, NilVal: nilVal, Column: col}
 	return stf, nil
 }
-
-const structTmpl = `
-// {{ .Name }} represents {{ .Schema }}.{{ .TableName }}
-type {{ .Name }} struct {
-{{- range .Fields }}
-	{{ .Name }} {{ .Type }} // {{ .Col.Name }}
-{{- end }}
-}`
 
 // PgTableToStruct converts table def to go struct
 func PgTableToStruct(t *PgTable, typeCfg *PgTypeMapConfig) (*Struct, error) {
 	s := &Struct{
-		Name:      varfmt.PublicVarName(t.Name),
-		TableName: t.Name,
-		Schema:    t.Schema,
+		Name:  varfmt.PublicVarName(t.Name),
+		Table: t,
 	}
 	var fs []*StructField
 	for _, c := range t.Columns {
@@ -215,9 +206,13 @@ func PgTableToStruct(t *PgTable, typeCfg *PgTypeMapConfig) (*Struct, error) {
 }
 
 // PgExecuteStructTmpl execute struct template with *Struct
-func PgExecuteStructTmpl(st *Struct) ([]byte, error) {
+func PgExecuteStructTmpl(st *Struct, path string) ([]byte, error) {
 	var src []byte
-	tpl, err := template.New("struct").Parse(structTmpl)
+	d, err := Asset(path)
+	if err != nil {
+		return src, errors.Wrap(err, "failed to load asset")
+	}
+	tpl, err := template.New("struct").Funcs(tmplFuncMap).Parse(string(d))
 	if err != nil {
 		return src, errors.Wrap(err, "failed to parse template")
 	}
@@ -254,7 +249,7 @@ func PgCreateStruct(db Queryer, schema, typeMapPath string) ([]byte, error) {
 		if err != nil {
 			return src, errors.Wrap(err, "faield to convert table definition to struct")
 		}
-		s, err := PgExecuteStructTmpl(st)
+		s, err := PgExecuteStructTmpl(st, "template/struct.tmpl")
 		if err != nil {
 			return src, errors.Wrap(err, "faield to execute template")
 		}

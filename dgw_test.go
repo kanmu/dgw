@@ -115,7 +115,7 @@ func TestPgTableToStruct(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		src, err := PgExecuteStructTmpl(st)
+		src, err := PgExecuteStructTmpl(st, "template/struct.tmpl")
 		if err != nil {
 			t.Fatal(err)
 		}

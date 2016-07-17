@@ -6,13 +6,13 @@
 
 ## Description
 
-This tool generates Table/Row Data Gateway Golang struct from PostgreSQL tables.
+`dgw` generates Table/Row Data Gateway Golang struct from PostgreSQL tables. Heavily inspired by [xo](https://github.com/knq/xo).
 
 
 ## Installation
 
 ```
-go get -u github.com/achiku/dgw/cmd/dgw
+go get -u github.com/achiku/dgw
 ```
 
 
