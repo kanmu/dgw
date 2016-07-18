@@ -78,6 +78,13 @@ notnull_nil_value= "\"\""
 nullable_go_type = "byte"
 nullable_nil_value= "\"\""
 
+[json]
+db_types = ["json"]
+notnull_go_type = "[]byte"
+notnull_nil_value= "\"\""
+nullable_go_type = "[]byte"
+nullable_nil_value= "\"\""
+
 [interval]
 db_types = ["interval"]
 notnull_go_type = "time.Duration"
