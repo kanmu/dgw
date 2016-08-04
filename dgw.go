@@ -21,7 +21,24 @@ SELECT
     format_type(a.atttypid, a.atttypmod) AS data_type,
     a.attnotnull AS not_null,
     COALESCE(pg_get_expr(ad.adbin, ad.adrelid), '') AS default_value,
-    COALESCE(ct.contype = 'p', false) AS  is_primary_key
+    COALESCE(ct.contype = 'p', false) AS  is_primary_key,
+    CASE WHEN a.atttypid = ANY ('{int,int8,int2}'::regtype[])
+      AND EXISTS (
+         SELECT 1 FROM pg_attrdef ad
+         WHERE  ad.adrelid = a.attrelid
+         AND    ad.adnum   = a.attnum
+         AND    ad.adsrc = 'nextval('''
+            || (pg_get_serial_sequence (a.attrelid::regclass::text
+                                      , a.attname))::regclass
+            || '''::regclass)'
+         )
+    THEN CASE a.atttypid
+            WHEN 'int'::regtype  THEN 'serial'
+            WHEN 'int8'::regtype THEN 'bigserial'
+            WHEN 'int2'::regtype THEN 'smallserial'
+         END
+    ELSE format_type(a.atttypid, a.atttypmod)
+    END AS data_type
 FROM pg_attribute a
 JOIN ONLY pg_class c ON c.oid = a.attrelid
 JOIN ONLY pg_namespace n ON n.oid = c.relnamespace
@@ -54,16 +71,38 @@ type TypeMap struct {
 	NullableNilValue string   `toml:"nullable_nil_value"`
 }
 
+// AutoKeyMap auto generating key config
+type AutoKeyMap struct {
+	Types []string `toml:"db_types"`
+}
+
 // PgTypeMapConfig go/db type map struct toml config
 type PgTypeMapConfig map[string]TypeMap
 
 // PgTable postgres table
 type PgTable struct {
-	Schema   string
-	Name     string
-	DataType string
-	AutoPk   bool
-	Columns  []*PgColumn
+	Schema     string
+	Name       string
+	DataType   string
+	AutoGenPk  bool
+	PrimaryKey *PgColumn
+	Columns    []*PgColumn
+}
+
+func (t *PgTable) setPrimaryKeyInfo(cfg *AutoKeyMap) {
+	t.AutoGenPk = false
+	for _, c := range t.Columns {
+		if c.IsPrimaryKey {
+			t.PrimaryKey = c
+			for _, typ := range cfg.Types {
+				if c.DDLType == typ {
+					t.AutoGenPk = true
+				}
+			}
+			return
+		}
+	}
+	return
 }
 
 // PgColumn postgres columns
@@ -71,6 +110,7 @@ type PgColumn struct {
 	FieldOrdinal int
 	Name         string
 	DataType     string
+	DDLType      string
 	NotNull      bool
 	DefaultValue sql.NullString
 	IsPrimaryKey bool
@@ -119,6 +159,7 @@ func PgLoadColumnDef(db Queryer, schema string, table string) ([]*PgColumn, erro
 			&c.NotNull,
 			&c.DefaultValue,
 			&c.IsPrimaryKey,
+			&c.DDLType,
 		)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to scan")
@@ -188,7 +229,8 @@ func PgColToField(col *PgColumn, typeCfg *PgTypeMapConfig) (*StructField, error)
 }
 
 // PgTableToStruct converts table def to go struct
-func PgTableToStruct(t *PgTable, typeCfg *PgTypeMapConfig) (*Struct, error) {
+func PgTableToStruct(t *PgTable, typeCfg *PgTypeMapConfig, keyConfig *AutoKeyMap) (*Struct, error) {
+	t.setPrimaryKeyInfo(keyConfig)
 	s := &Struct{
 		Name:  varfmt.PublicVarName(t.Name),
 		Table: t,
@@ -244,8 +286,12 @@ func PgCreateStruct(db Queryer, schema, typeMapPath string) ([]byte, error) {
 			return src, errors.Wrap(err, fmt.Sprintf("failed to decode type map file %s", typeMapPath))
 		}
 	}
+	keyCfg := &AutoKeyMap{}
+	if _, err := toml.DecodeFile("./autokey.toml", keyCfg); err != nil {
+		return src, errors.Wrap(err, fmt.Sprintf("failed to decode type map file %s", "./autokey.toml"))
+	}
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, cfg)
+		st, err := PgTableToStruct(tbl, cfg, keyCfg)
 		if err != nil {
 			return src, errors.Wrap(err, "faield to convert table definition to struct")
 		}
@@ -253,7 +299,12 @@ func PgCreateStruct(db Queryer, schema, typeMapPath string) ([]byte, error) {
 		if err != nil {
 			return src, errors.Wrap(err, "faield to execute template")
 		}
+		m, err := PgExecuteStructTmpl(st, "template/method.tmpl")
+		if err != nil {
+			return src, errors.Wrap(err, "faield to execute template")
+		}
 		src = append(src, s...)
+		src = append(src, m...)
 	}
 	return src, nil
 }

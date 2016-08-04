@@ -1,4 +1,3 @@
-{{ if .PrimaryKey }}
 // Exists determines if the {{ .Name }} exists in the database.
 func ({{ shortname .Name }} *{{ .Name }}) Exists() bool {
 	return {{ shortname .Name }}._exists
@@ -19,15 +18,15 @@ func ({{ shortname .Name }} *{{ .Name }}) Insert(db Queryer) error {
 	}
 
 	// sql query
-	const sqlstr = `INSERT INTO {{ schema .Schema .Table.TableName }} (` +
-		`{{ colnames .Fields .PrimaryKey.Name }}` +
+    const sqlstr = `INSERT INTO {{ .Table.Schema }}.{{ .Table.Name }} (` +
+		`{{ colnames .Fields .Table.PrimaryKey }}` +
 		`) VALUES (` +
-		`{{ colvals .Fields .PrimaryKey.Name }}` +
-		`) RETURNING {{ colname .PrimaryKey.Col }}`
+		`{{ colvals .Fields .Table.PrimaryKey }}` +
+		`) RETURNING {{ colname .Table.PrimaryKey }}`
 
 	// run query
-	XOLog(sqlstr, {{ fieldnames .Fields (shortname .Name) .PrimaryKey.Name }})
-	err = db.QueryRow(sqlstr, {{ fieldnames .Fields (shortname .Name) .PrimaryKey.Name }}).Scan(&{{ shortname .Name }}.{{ .PrimaryKey.Name }})
+	XOLog(sqlstr, {{ fieldnames .Fields (shortname .Name) .Table.PrimaryKey }})
+	err = db.QueryRow(sqlstr, {{ fieldnames .Fields (shortname .Name) .Table.PrimaryKey }}).Scan(&{{ shortname .Name }}.{{ .Table.PrimaryKey }})
 	if err != nil {
 		return err
 	}
@@ -53,15 +52,15 @@ func ({{ shortname .Name }} *{{ .Name }}) Update(db Queryer) error {
 	}
 
 	// sql query
-	const sqlstr = `UPDATE {{ schema .Schema .Table.TableName }} SET (` +
-		`{{ colnames .Fields .PrimaryKey.Name }}` +
+    const sqlstr = `UPDATE {{ .Tabl.Schema }}.{{ .Table.Name }} SET (` +
+		`{{ colnames .Fields .Table.PrimaryKey }}` +
 		`) = ( ` +
-		`{{ colvals .Fields .PrimaryKey.Name }}` +
-		`) WHERE {{ colname .PrimaryKey.Col }} = ${{ colcount .Fields .PrimaryKey.Name }}`
+		`{{ colvals .Fields .Table.PrimaryKey }}` +
+		`) WHERE {{ colname .Table.PrimaryKey }} = ${{ colcount .Fields .Table.PrimaryKey }}`
 
 	// run query
-	XOLog(sqlstr, {{ fieldnames .Fields (shortname .Name) .PrimaryKey.Name }}, {{ shortname .Name }}.{{ .PrimaryKey.Name }})
-	_, err = db.Exec(sqlstr, {{ fieldnames .Fields (shortname .Name) .PrimaryKey.Name }}, {{ shortname .Name }}.{{ .PrimaryKey.Name }})
+	XOLog(sqlstr, {{ fieldnames .Fields (shortname .Name) .Table.PrimaryKey }}, {{ shortname .Name }}.{{ .Table.PrimaryKey }})
+	_, err = db.Exec(sqlstr, {{ fieldnames .Fields (shortname .Name) .Table.PrimaryKey }}, {{ shortname .Name }}.{{ .Table.PrimaryKey }})
 	return err
 }
 
@@ -86,11 +85,11 @@ func ({{ shortname .Name }} *{{ .Name }}) Upsert(db Queryer) error {
 	}
 
 	// sql query
-	const sqlstr = `INSERT INTO {{ schema .Schema .Table.TableName }} (` +
+    const sqlstr = `INSERT INTO {{ .Table.Schema }}.{{ .Table.Name }} (` +
 		`{{ colnames .Fields }}` +
 		`) VALUES (` +
 		`{{ colvals .Fields }}` +
-		`) ON CONFLICT ({{ colname .PrimaryKey.Col }}) DO UPDATE SET (` +
+		`) ON CONFLICT ({{ colname .Table.PrimaryKey }}) DO UPDATE SET (` +
 		`{{ colnames .Fields }}` +
 		`) = (` +
 		`{{ colprefixnames .Fields "EXCLUDED" }}` +
@@ -124,11 +123,11 @@ func ({{ shortname .Name }} *{{ .Name }}) Delete(db Queryer) error {
 	}
 
 	// sql query
-	const sqlstr = `DELETE FROM {{ schema .Schema .Table.TableName }} WHERE {{ colname .PrimaryKey.Col }} = $1`
+    const sqlstr = `DELETE FROM {{ .Table.Schema }}.{{ .Table.Name }} WHERE {{ colname .Table.PrimaryKey }} = $1`
 
 	// run query
-	XOLog(sqlstr, {{ shortname .Name }}.{{ .PrimaryKey.Name }})
-	_, err = db.Exec(sqlstr, {{ shortname .Name }}.{{ .PrimaryKey.Name }})
+	XOLog(sqlstr, {{ shortname .Name }}.{{ .Table.PrimaryKey }})
+	_, err = db.Exec(sqlstr, {{ shortname .Name }}.{{ .Table.PrimaryKey }})
 	if err != nil {
 		return err
 	}
@@ -138,5 +137,3 @@ func ({{ shortname .Name }} *{{ .Name }}) Delete(db Queryer) error {
 
 	return nil
 }
-{{- end }}
-
