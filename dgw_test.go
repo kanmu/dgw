@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/BurntSushi/toml"
 	_ "github.com/lib/pq"
 )
 
@@ -29,6 +30,33 @@ func testPgSetup(t *testing.T) (*sql.DB, func()) {
 		conn.Close()
 	}
 	return conn, cleanup
+}
+
+func testSetupStruct(t *testing.T, conn *sql.DB) []*Struct {
+	schema := "public"
+	tbls, err := PgLoadTableDef(conn, schema)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := "./mapconfig/typemap.toml"
+	cfg, err := PgLoadTypeMapFromFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keyCfg := &AutoKeyMap{}
+	if _, err := toml.DecodeFile("./autokey.toml", keyCfg); err != nil {
+		t.Fatal(err)
+	}
+
+	var sts []*Struct
+	for _, tbl := range tbls {
+		st, err := PgTableToStruct(tbl, cfg, keyCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sts = append(sts, st)
+	}
+	return sts
 }
 
 func TestPgLoadColumnDef(t *testing.T) {
@@ -110,12 +138,48 @@ func TestPgTableToStruct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	keyCfg := &AutoKeyMap{}
+	if _, err := toml.DecodeFile("./autokey.toml", keyCfg); err != nil {
+		t.Fatal(err)
+	}
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, cfg)
+		st, err := PgTableToStruct(tbl, cfg, keyCfg)
 		if err != nil {
 			t.Fatal(err)
 		}
-		src, err := PgExecuteStructTmpl(st, "template/struct.tmpl")
+		t.Logf("%+v", st.Table)
+		src, err := PgExecuteStructTmpl(&StructTmpl{Struct: st}, "template/struct.tmpl")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("%s", src)
+	}
+}
+
+func TestPgTableToMethod(t *testing.T) {
+	conn, cleanup := testPgSetup(t)
+	defer cleanup()
+
+	schema := "public"
+	tbls, err := PgLoadTableDef(conn, schema)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := "./mapconfig/typemap.toml"
+	cfg, err := PgLoadTypeMapFromFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keyCfg := &AutoKeyMap{}
+	if _, err := toml.DecodeFile("./autokey.toml", keyCfg); err != nil {
+		t.Fatal(err)
+	}
+	for _, tbl := range tbls {
+		st, err := PgTableToStruct(tbl, cfg, keyCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		src, err := PgExecuteStructTmpl(&StructTmpl{Struct: st}, "template/method.tmpl")
 		if err != nil {
 			t.Fatal(err)
 		}
