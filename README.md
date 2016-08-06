@@ -24,7 +24,8 @@ usage: dgw [<flags>] <conn>
 Flags:
   --help             Show context-sensitive help (also try --help-long and --help-man).
   --schema="public"  PostgreSQL schema name
-  --typemap=TYPEMAP  type map file path
+  --package="main"   package name
+  --typemap=TYPEMAP  column type and go type map file path
 
 Args:
   <conn>  PostgreSQL connection string in URL format

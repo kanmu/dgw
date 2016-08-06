@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/BurntSushi/toml"
 	_ "github.com/lib/pq"
 )
 
@@ -38,19 +37,10 @@ func testSetupStruct(t *testing.T, conn *sql.DB) []*Struct {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := "./mapconfig/typemap.toml"
-	cfg, err := PgLoadTypeMapFromFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	keyCfg := &AutoKeyMap{}
-	if _, err := toml.DecodeFile("./autokey.toml", keyCfg); err != nil {
-		t.Fatal(err)
-	}
 
 	var sts []*Struct
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, cfg, keyCfg)
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -98,14 +88,9 @@ func TestPgColToField(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := "./mapconfig/typemap.toml"
-	cfg, err := PgLoadTypeMapFromFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	for _, c := range cols {
-		f, err := PgColToField(c, cfg)
+		f, err := PgColToField(c, &defaultTypeMapCfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -114,7 +99,7 @@ func TestPgColToField(t *testing.T) {
 }
 
 func TestPgLoadTypeMap(t *testing.T) {
-	path := "./mapconfig/typemap.toml"
+	path := "./typemap.toml"
 	c, err := PgLoadTypeMapFromFile(path)
 	if err != nil {
 		t.Fatal(err)
@@ -133,13 +118,9 @@ func TestPgTableToStruct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := "./mapconfig/typemap.toml"
-	cfg, err := PgLoadTypeMapFromFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
+
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, cfg, autoGenKeyCfg)
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -161,13 +142,8 @@ func TestPgTableToMethod(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := "./mapconfig/typemap.toml"
-	cfg, err := PgLoadTypeMapFromFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, cfg, autoGenKeyCfg)
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg)
 		if err != nil {
 			t.Fatal(err)
 		}

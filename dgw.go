@@ -65,11 +65,9 @@ AND c.relkind = 'r'
 
 // TypeMap go/db type map struct
 type TypeMap struct {
-	DBTypes          []string `toml:"db_types"`
-	NotNullGoType    string   `toml:"notnull_go_type"`
-	NotNullNilValue  string   `toml:"notnull_nil_value"`
-	NullableGoType   string   `toml:"nullable_go_type"`
-	NullableNilValue string   `toml:"nullable_nil_value"`
+	DBTypes        []string `toml:"db_types"`
+	NotNullGoType  string   `toml:"notnull_go_type"`
+	NullableGoType string   `toml:"nullable_go_type"`
 }
 
 // AutoKeyMap auto generating key config
@@ -138,7 +136,6 @@ type StructField struct {
 	Name   string
 	Type   string
 	Tag    string
-	NilVal string
 	Column *PgColumn
 }
 
@@ -214,28 +211,26 @@ func contains(v string, l []string) bool {
 }
 
 // PgConvertType converts type
-func PgConvertType(col *PgColumn, typeCfg *PgTypeMapConfig) (string, string) {
+func PgConvertType(col *PgColumn, typeCfg *PgTypeMapConfig) string {
 	cfg := map[string]TypeMap(*typeCfg)
 	typ := cfg["default"].NotNullGoType
-	nilVal := cfg["default"].NotNullNilValue
 	for _, v := range cfg {
 		if contains(col.DataType, v.DBTypes) {
 			if col.NotNull {
-				return v.NotNullGoType, v.NotNullNilValue
+				return v.NotNullGoType
 			}
-			return v.NullableGoType, v.NullableNilValue
+			return v.NullableGoType
 		}
 	}
-	return typ, nilVal
+	return typ
 }
 
 // PgColToField converts pg column to go struct field
 func PgColToField(col *PgColumn, typeCfg *PgTypeMapConfig) (*StructField, error) {
-	stfType, nilVal := PgConvertType(col, typeCfg)
+	stfType := PgConvertType(col, typeCfg)
 	stf := &StructField{
 		Name:   varfmt.PublicVarName(col.Name),
 		Type:   stfType,
-		NilVal: nilVal,
 		Column: col,
 	}
 	return stf, nil
