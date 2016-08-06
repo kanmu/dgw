@@ -2,7 +2,6 @@
 // sources:
 // template/method.tmpl
 // template/struct.tmpl
-// mapconfig/typemap.toml
 // DO NOT EDIT!
 
 package main
@@ -51,24 +50,6 @@ func templateMethodTmpl() (*asset, error) {
 func templateStructTmpl() (*asset, error) {
 	path := "/Users/achiku/.go/1.6.1/src/github.com/achiku/dgw/template/struct.tmpl"
 	name := "template/struct.tmpl"
-	bytes, err := bindataRead(path, name)
-	if err != nil {
-		return nil, err
-	}
-
-	fi, err := os.Stat(path)
-	if err != nil {
-		err = fmt.Errorf("Error reading asset info %s at %s: %v", name, path, err)
-	}
-
-	a := &asset{bytes: bytes, info: fi}
-	return a, err
-}
-
-// mapconfigTypemapToml reads file data from disk. It returns an error on failure.
-func mapconfigTypemapToml() (*asset, error) {
-	path := "/Users/achiku/.go/1.6.1/src/github.com/achiku/dgw/mapconfig/typemap.toml"
-	name := "mapconfig/typemap.toml"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
 		return nil, err
@@ -137,7 +118,6 @@ func AssetNames() []string {
 var _bindata = map[string]func() (*asset, error){
 	"template/method.tmpl": templateMethodTmpl,
 	"template/struct.tmpl": templateStructTmpl,
-	"mapconfig/typemap.toml": mapconfigTypemapToml,
 }
 
 // AssetDir returns the file names below a certain
@@ -180,9 +160,6 @@ type bintree struct {
 	Children map[string]*bintree
 }
 var _bintree = &bintree{nil, map[string]*bintree{
-	"mapconfig": &bintree{nil, map[string]*bintree{
-		"typemap.toml": &bintree{mapconfigTypemapToml, map[string]*bintree{}},
-	}},
 	"template": &bintree{nil, map[string]*bintree{
 		"method.tmpl": &bintree{templateMethodTmpl, map[string]*bintree{}},
 		"struct.tmpl": &bintree{templateStructTmpl, map[string]*bintree{}},

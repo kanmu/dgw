@@ -14,5 +14,5 @@ before_script:
 script:
   - go get -u github.com/mattn/gom 
   - gom install
-  - gom exec go-bindata -debug -o bindata.go template mapconfig
+  - gom exec go-bindata -debug -o bindata.go template
   - go test
