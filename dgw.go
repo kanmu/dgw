@@ -6,8 +6,9 @@ import (
 	"database/sql"
 	"fmt"
 	"go/format"
-	"html/template"
+	"log"
 	"sort"
+	"text/template"
 
 	"github.com/BurntSushi/toml"
 	"github.com/achiku/varfmt"
@@ -81,25 +82,24 @@ type PgTypeMapConfig map[string]TypeMap
 
 // PgTable postgres table
 type PgTable struct {
-	Schema     string
-	Name       string
-	DataType   string
-	AutoGenPk  bool
-	PrimaryKey *PgColumn
-	Columns    []*PgColumn
+	Schema      string
+	Name        string
+	DataType    string
+	AutoGenPk   bool
+	PrimaryKeys []*PgColumn
+	Columns     []*PgColumn
 }
 
 func (t *PgTable) setPrimaryKeyInfo(cfg *AutoKeyMap) {
 	t.AutoGenPk = false
 	for _, c := range t.Columns {
 		if c.IsPrimaryKey {
-			t.PrimaryKey = c
+			t.PrimaryKeys = append(t.PrimaryKeys, c)
 			for _, typ := range cfg.Types {
 				if c.DDLType == typ {
 					t.AutoGenPk = true
 				}
 			}
-			return
 		}
 	}
 	return
@@ -122,6 +122,11 @@ type Struct struct {
 	Table   *PgTable
 	Comment string
 	Fields  []*StructField
+}
+
+// StructTmpl go struct passed to template
+type StructTmpl struct {
+	Struct *Struct
 }
 
 // StructField go struct field
@@ -222,9 +227,13 @@ func PgConvertType(col *PgColumn, typeCfg *PgTypeMapConfig) (string, string) {
 
 // PgColToField converts pg column to go struct field
 func PgColToField(col *PgColumn, typeCfg *PgTypeMapConfig) (*StructField, error) {
-	stfName := varfmt.PublicVarName(col.Name)
 	stfType, nilVal := PgConvertType(col, typeCfg)
-	stf := &StructField{Name: stfName, Type: stfType, NilVal: nilVal, Column: col}
+	stf := &StructField{
+		Name:   varfmt.PublicVarName(col.Name),
+		Type:   stfType,
+		NilVal: nilVal,
+		Column: col,
+	}
 	return stf, nil
 }
 
@@ -248,7 +257,7 @@ func PgTableToStruct(t *PgTable, typeCfg *PgTypeMapConfig, keyConfig *AutoKeyMap
 }
 
 // PgExecuteStructTmpl execute struct template with *Struct
-func PgExecuteStructTmpl(st *Struct, path string) ([]byte, error) {
+func PgExecuteStructTmpl(st *StructTmpl, path string) ([]byte, error) {
 	var src []byte
 	d, err := Asset(path)
 	if err != nil {
@@ -260,11 +269,12 @@ func PgExecuteStructTmpl(st *Struct, path string) ([]byte, error) {
 	}
 	buf := new(bytes.Buffer)
 	if err := tpl.Execute(buf, st); err != nil {
-		return src, errors.Wrap(err, "failed to execute template")
+		return src, errors.Wrap(err, fmt.Sprintf("failed to execute template:\n%s", src))
 	}
 	src, err = format.Source(buf.Bytes())
 	if err != nil {
-		return src, errors.Wrap(err, "failed to format source code")
+		log.Printf("%s", buf)
+		return src, errors.Wrap(err, fmt.Sprintf("failed to format code:\n%s", src))
 	}
 	return src, nil
 }
@@ -295,11 +305,11 @@ func PgCreateStruct(db Queryer, schema, typeMapPath string) ([]byte, error) {
 		if err != nil {
 			return src, errors.Wrap(err, "faield to convert table definition to struct")
 		}
-		s, err := PgExecuteStructTmpl(st, "template/struct.tmpl")
+		s, err := PgExecuteStructTmpl(&StructTmpl{Struct: st}, "template/struct.tmpl")
 		if err != nil {
 			return src, errors.Wrap(err, "faield to execute template")
 		}
-		m, err := PgExecuteStructTmpl(st, "template/method.tmpl")
+		m, err := PgExecuteStructTmpl(&StructTmpl{Struct: st}, "template/method.tmpl")
 		if err != nil {
 			return src, errors.Wrap(err, "faield to execute template")
 		}
