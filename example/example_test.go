@@ -1,4 +1,4 @@
-package main
+package dgw_example
 
 import (
 	"database/sql"
