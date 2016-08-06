@@ -280,8 +280,11 @@ func PgExecuteStructTmpl(st *StructTmpl, path string) ([]byte, error) {
 }
 
 // PgCreateStruct creates struct from given schema
-func PgCreateStruct(db Queryer, schema, typeMapPath string) ([]byte, error) {
+func PgCreateStruct(db Queryer, schema, typeMapPath, pkgName string) ([]byte, error) {
 	var src []byte
+	pkgDef := []byte(fmt.Sprintf("package %s\n\n", pkgName))
+	src = append(src, pkgDef...)
+
 	tbls, err := PgLoadTableDef(db, schema)
 	if err != nil {
 		return src, errors.Wrap(err, "faield to load table definitions")
@@ -296,9 +299,8 @@ func PgCreateStruct(db Queryer, schema, typeMapPath string) ([]byte, error) {
 			return src, errors.Wrap(err, fmt.Sprintf("failed to decode type map file %s", typeMapPath))
 		}
 	}
-	keyCfg := &AutoKeyMap{}
-	if _, err := toml.DecodeFile("./autokey.toml", keyCfg); err != nil {
-		return src, errors.Wrap(err, fmt.Sprintf("failed to decode type map file %s", "./autokey.toml"))
+	keyCfg := &AutoKeyMap{
+		Types: []string{"serial", "bigserial", "UUID"},
 	}
 	for _, tbl := range tbls {
 		st, err := PgTableToStruct(tbl, cfg, keyCfg)

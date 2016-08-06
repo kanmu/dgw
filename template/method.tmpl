@@ -22,7 +22,7 @@ func Get{{ .Struct.Name }}ByPk(db Queryer, {{ createSelectByPkFuncParams .Struct
         `{{ createSelectByPkSQL .Struct }}`,
         {{ createSelectByPkSQLParams .Struct }}).Scan({{ createSelectByPkScan .Struct }})
 	if err != nil {
-        return errors.Wrap(err, "failed to select {{ .Struct.Table.Name }}")
+        return nil, errors.Wrap(err, "failed to select {{ .Struct.Table.Name }}")
 	}
 	return &r, nil
 }

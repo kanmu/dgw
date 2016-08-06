@@ -15,4 +15,4 @@ script:
   - go get -u github.com/mattn/gom 
   - gom install
   - gom exec go-bindata -debug -o bindata.go template mapconfig
-  - go test -v
+  - go test
