@@ -90,6 +90,10 @@ type PgTable struct {
 	Columns     []*PgColumn
 }
 
+var autoGenKeyCfg = &AutoKeyMap{
+	Types: []string{"serial", "bigserial", "UUID"},
+}
+
 func (t *PgTable) setPrimaryKeyInfo(cfg *AutoKeyMap) {
 	t.AutoGenPk = false
 	for _, c := range t.Columns {
@@ -299,11 +303,8 @@ func PgCreateStruct(db Queryer, schema, typeMapPath, pkgName string) ([]byte, er
 			return src, errors.Wrap(err, fmt.Sprintf("failed to decode type map file %s", typeMapPath))
 		}
 	}
-	keyCfg := &AutoKeyMap{
-		Types: []string{"serial", "bigserial", "UUID"},
-	}
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, cfg, keyCfg)
+		st, err := PgTableToStruct(tbl, cfg, autoGenKeyCfg)
 		if err != nil {
 			return src, errors.Wrap(err, "faield to convert table definition to struct")
 		}

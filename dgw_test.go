@@ -138,12 +138,8 @@ func TestPgTableToStruct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	keyCfg := &AutoKeyMap{}
-	if _, err := toml.DecodeFile("./autokey.toml", keyCfg); err != nil {
-		t.Fatal(err)
-	}
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, cfg, keyCfg)
+		st, err := PgTableToStruct(tbl, cfg, autoGenKeyCfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -170,12 +166,8 @@ func TestPgTableToMethod(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	keyCfg := &AutoKeyMap{}
-	if _, err := toml.DecodeFile("./autokey.toml", keyCfg); err != nil {
-		t.Fatal(err)
-	}
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, cfg, keyCfg)
+		st, err := PgTableToStruct(tbl, cfg, autoGenKeyCfg)
 		if err != nil {
 			t.Fatal(err)
 		}
