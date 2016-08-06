@@ -1,3 +1,7 @@
+DROP TABLE if EXISTS t1;
+DROP TABLE if EXISTS t2;
+DROP TABLE if EXISTS t3;
+
 CREATE TABLE t1 (
   id bigserial primary key
   , i integer not null unique
@@ -9,7 +13,6 @@ CREATE TABLE t1 (
   , nullable_tz timestamp with time zone
   , json_data json not null
   , xml_data xml not null
-  , tm time
 );
 
 CREATE TABLE t2 (
