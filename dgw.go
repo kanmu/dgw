@@ -61,6 +61,7 @@ FROM pg_class c
 JOIN ONLY pg_namespace n ON n.oid = c.relnamespace
 WHERE n.nspname = $1
 AND c.relkind = 'r'
+ORDER BY c.relname
 `
 
 // TypeMap go/db type map struct
