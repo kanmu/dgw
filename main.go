@@ -8,11 +8,12 @@ import (
 )
 
 var (
-	connStr         = kingpin.Arg("conn", "PostgreSQL connection string in URL format").Required().String()
-	schema          = kingpin.Flag("schema", "PostgreSQL schema name").Default("public").Short('s').String()
-	pkgName         = kingpin.Flag("package", "package name").Default("main").Short('p').String()
-	typeMapFilePath = kingpin.Flag("typemap", "column type and go type map file path").Short('t').String()
-	outFile         = kingpin.Flag("output", "output file path").Short('o').String()
+	connStr          = kingpin.Arg("conn", "PostgreSQL connection string in URL format").Required().String()
+	schema           = kingpin.Flag("schema", "PostgreSQL schema name").Default("public").Short('s').String()
+	pkgName          = kingpin.Flag("package", "package name").Default("main").Short('p').String()
+	typeMapFilePath  = kingpin.Flag("typemap", "column type and go type map file path").Short('t').String()
+	excludeTableName = kingpin.Flag("exclude", "table names to exclude").Short('x').Strings()
+	outFile          = kingpin.Flag("output", "output file path").Short('o').String()
 )
 
 func main() {
@@ -23,7 +24,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	src, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName)
+	src, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName, *excludeTableName)
 	if err != nil {
 		log.Fatal(err)
 	}
