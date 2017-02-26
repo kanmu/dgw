@@ -30,10 +30,12 @@ go get -u github.com/achiku/dgw
 usage: dgw [<flags>] <conn>
 
 Flags:
-  --help             Show context-sensitive help (also try --help-long and --help-man).
-  --schema="public"  PostgreSQL schema name
-  --package="main"   package name
-  --typemap=TYPEMAP  column type and go type map file path
+      --help                 Show context-sensitive help (also try --help-long and --help-man).
+  -s, --schema="public"      PostgreSQL schema name
+  -p, --package="main"       package name
+  -t, --typemap=TYPEMAP      column type and go type map file path
+  -x, --exclude=EXCLUDE ...  table names to exclude
+  -o, --output=OUTPUT        output file path
 
 Args:
   <conn>  PostgreSQL connection string in URL format
