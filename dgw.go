@@ -280,7 +280,7 @@ func PgExecuteStructTmpl(st *StructTmpl, path string) ([]byte, error) {
 }
 
 // PgCreateStruct creates struct from given schema
-func PgCreateStruct(db Queryer, schema, typeMapPath, pkgName string) ([]byte, error) {
+func PgCreateStruct(db Queryer, schema, typeMapPath, pkgName string, excludeTableName []string) ([]byte, error) {
 	var src []byte
 	pkgDef := []byte(fmt.Sprintf("package %s\n\n", pkgName))
 	src = append(src, pkgDef...)
@@ -300,6 +300,9 @@ func PgCreateStruct(db Queryer, schema, typeMapPath, pkgName string) ([]byte, er
 		}
 	}
 	for _, tbl := range tbls {
+		if contains(tbl.Name, excludeTableName) {
+			continue
+		}
 		st, err := PgTableToStruct(tbl, cfg, autoGenKeyCfg)
 		if err != nil {
 			return src, errors.Wrap(err, "faield to convert table definition to struct")
