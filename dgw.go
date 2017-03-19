@@ -90,7 +90,7 @@ type PgTable struct {
 }
 
 var autoGenKeyCfg = &AutoKeyMap{
-	Types: []string{"serial", "bigserial", "UUID"},
+	Types: []string{"serial", "bigserial", "uuid"},
 }
 
 func (t *PgTable) setPrimaryKeyInfo(cfg *AutoKeyMap) {
