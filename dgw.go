@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"fmt"
 	"go/format"
-	"log"
 	"sort"
 	"text/template"
 
@@ -273,7 +272,6 @@ func PgExecuteStructTmpl(st *StructTmpl, path string) ([]byte, error) {
 	}
 	src, err = format.Source(buf.Bytes())
 	if err != nil {
-		log.Printf("%s", buf)
 		return src, errors.Wrap(err, fmt.Sprintf("failed to format code:\n%s", src))
 	}
 	return src, nil

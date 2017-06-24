@@ -82,7 +82,7 @@ CREATE TABLE t3 (
 Generate Go code by the following command.
 
 ```
-$ dgw postgres://dgw_test@localhost/dgw_test?sslmode=disable --typemap=./typemap.toml --schema=public --package=dgw_example > example.go
+$ dgw postgres://dgw_test@localhost/dgw_test?sslmode=disable --typemap=./typemap.toml --schema=public --package=dgwexample --output=example.go
 ```
 
 ```go

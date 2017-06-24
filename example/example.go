@@ -1,4 +1,4 @@
-package dgw_example
+package dgwexample
 
 import (
 	"database/sql"
@@ -101,6 +101,35 @@ func GetT3ByPk(db Queryer, pk0 int, pk1 int) (*T3, error) {
 		pk0, pk1).Scan(&r.ID, &r.I)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to select t3")
+	}
+	return &r, nil
+}
+
+// T4 represents public.t4
+type T4 struct {
+	ID int // id
+	I  int // i
+}
+
+// Create inserts the T4 to the database.
+func (r *T4) Create(db Queryer) error {
+	_, err := db.Exec(
+		`INSERT INTO t4 (id, i) VALUES ($1, $2)`,
+		&r.ID, &r.I)
+	if err != nil {
+		return errors.Wrap(err, "failed to insert t4")
+	}
+	return nil
+}
+
+// GetT4ByPk select the T4 from the database.
+func GetT4ByPk(db Queryer, pk0 int, pk1 int) (*T4, error) {
+	var r T4
+	err := db.QueryRow(
+		`SELECT id, i FROM t4 WHERE id = $1 AND i = $2`,
+		pk0, pk1).Scan(&r.ID, &r.I)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to select t4")
 	}
 	return &r, nil
 }

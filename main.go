@@ -1,8 +1,10 @@
 package main
 
 import (
+	"io"
 	"log"
 	"os"
+	"os/exec"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -29,22 +31,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var out os.File
+	var out io.Writer
 	if *outFile != "" {
-		out, err := os.Create(*outFile)
+		out, err = os.Create(*outFile)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("failed to create output file %s: %s", *outFile, err)
 		}
-		defer out.Close()
-
-		if _, err := out.Write(src); err != nil {
-			log.Fatal(err)
-		}
-		out.Sync()
-		return
+	} else {
+		out = os.Stdout
 	}
-	out = *os.Stdout
 	if _, err := out.Write(src); err != nil {
 		log.Fatal(err)
+	}
+	if *outFile != "" {
+		params := []string{"-w", *outFile}
+		if err := exec.Command("goimports", params...).Run(); err != nil {
+			log.Fatalf("failed to goimports: %s", err)
+		}
 	}
 }
