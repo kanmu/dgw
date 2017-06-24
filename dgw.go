@@ -6,14 +6,31 @@ import (
 	"database/sql"
 	"fmt"
 	"go/format"
-	"log"
+	"io/ioutil"
 	"sort"
 	"text/template"
 
 	"github.com/BurntSushi/toml"
 	"github.com/achiku/varfmt"
+	_ "github.com/lib/pq" // postgres
 	"github.com/pkg/errors"
 )
+
+// Queryer database/sql compatible query interface
+type Queryer interface {
+	Exec(string, ...interface{}) (sql.Result, error)
+	Query(string, ...interface{}) (*sql.Rows, error)
+	QueryRow(string, ...interface{}) *sql.Row
+}
+
+// OpenDB opens database connection
+func OpenDB(connStr string) (*sql.DB, error) {
+	conn, err := sql.Open("postgres", connStr)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to connect to database")
+	}
+	return conn, nil
+}
 
 const pgLoadColumnDef = `
 SELECT
@@ -256,8 +273,8 @@ func PgTableToStruct(t *PgTable, typeCfg *PgTypeMapConfig, keyConfig *AutoKeyMap
 	return s, nil
 }
 
-// PgExecuteStructTmpl execute struct template with *Struct
-func PgExecuteStructTmpl(st *StructTmpl, path string) ([]byte, error) {
+// PgExecuteDefaultTmpl execute struct template with *Struct
+func PgExecuteDefaultTmpl(st *StructTmpl, path string) ([]byte, error) {
 	var src []byte
 	d, err := Asset(path)
 	if err != nil {
@@ -273,14 +290,32 @@ func PgExecuteStructTmpl(st *StructTmpl, path string) ([]byte, error) {
 	}
 	src, err = format.Source(buf.Bytes())
 	if err != nil {
-		log.Printf("%s", buf)
+		return src, errors.Wrap(err, fmt.Sprintf("failed to format code:\n%s", src))
+	}
+	return src, nil
+}
+
+// PgExecuteCustomTmpl execute custom template
+func PgExecuteCustomTmpl(st *StructTmpl, customTmpl string) ([]byte, error) {
+	var src []byte
+	tpl, err := template.New("struct").Funcs(tmplFuncMap).Parse(customTmpl)
+	if err != nil {
+		return src, errors.Wrap(err, "failed to parse template")
+	}
+	buf := new(bytes.Buffer)
+	if err := tpl.Execute(buf, st); err != nil {
+		return src, errors.Wrap(err, fmt.Sprintf("failed to execute custom template:\n%s", src))
+	}
+	src, err = format.Source(buf.Bytes())
+	if err != nil {
 		return src, errors.Wrap(err, fmt.Sprintf("failed to format code:\n%s", src))
 	}
 	return src, nil
 }
 
 // PgCreateStruct creates struct from given schema
-func PgCreateStruct(db Queryer, schema, typeMapPath, pkgName string, excludeTableName []string) ([]byte, error) {
+func PgCreateStruct(
+	db Queryer, schema, typeMapPath, pkgName, customTmpl string, exTbls []string) ([]byte, error) {
 	var src []byte
 	pkgDef := []byte(fmt.Sprintf("package %s\n\n", pkgName))
 	src = append(src, pkgDef...)
@@ -300,23 +335,35 @@ func PgCreateStruct(db Queryer, schema, typeMapPath, pkgName string, excludeTabl
 		}
 	}
 	for _, tbl := range tbls {
-		if contains(tbl.Name, excludeTableName) {
+		if contains(tbl.Name, exTbls) {
 			continue
 		}
 		st, err := PgTableToStruct(tbl, cfg, autoGenKeyCfg)
 		if err != nil {
 			return src, errors.Wrap(err, "faield to convert table definition to struct")
 		}
-		s, err := PgExecuteStructTmpl(&StructTmpl{Struct: st}, "template/struct.tmpl")
-		if err != nil {
-			return src, errors.Wrap(err, "faield to execute template")
+		if customTmpl != "" {
+			tmpl, err := ioutil.ReadFile(customTmpl)
+			if err != nil {
+				return nil, err
+			}
+			s, err := PgExecuteCustomTmpl(&StructTmpl{Struct: st}, string(tmpl))
+			if err != nil {
+				return nil, errors.Wrap(err, "PgExecuteCustomTmpl failed")
+			}
+			src = append(src, s...)
+		} else {
+			s, err := PgExecuteDefaultTmpl(&StructTmpl{Struct: st}, "template/struct.tmpl")
+			if err != nil {
+				return src, errors.Wrap(err, "faield to execute template")
+			}
+			m, err := PgExecuteDefaultTmpl(&StructTmpl{Struct: st}, "template/method.tmpl")
+			if err != nil {
+				return src, errors.Wrap(err, "faield to execute template")
+			}
+			src = append(src, s...)
+			src = append(src, m...)
 		}
-		m, err := PgExecuteStructTmpl(&StructTmpl{Struct: st}, "template/method.tmpl")
-		if err != nil {
-			return src, errors.Wrap(err, "faield to execute template")
-		}
-		src = append(src, s...)
-		src = append(src, m...)
 	}
 	return src, nil
 }

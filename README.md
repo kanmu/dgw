@@ -35,6 +35,7 @@ Flags:
   -p, --package="main"       package name
   -t, --typemap=TYPEMAP      column type and go type map file path
   -x, --exclude=EXCLUDE ...  table names to exclude
+      --template=TEMPLATE    custom template path
   -o, --output=OUTPUT        output file path
 
 Args:
@@ -82,7 +83,7 @@ CREATE TABLE t3 (
 Generate Go code by the following command.
 
 ```
-$ dgw postgres://dgw_test@localhost/dgw_test?sslmode=disable --typemap=./typemap.toml --schema=public --package=dgw_example > example.go
+$ dgw postgres://dgw_test@localhost/dgw_test?sslmode=disable --typemap=./typemap.toml --schema=public --package=dgwexample --output=example.go
 ```
 
 ```go
