@@ -35,6 +35,7 @@ Flags:
   -p, --package="main"       package name
   -t, --typemap=TYPEMAP      column type and go type map file path
   -x, --exclude=EXCLUDE ...  table names to exclude
+      --template=TEMPLATE    custom template path
   -o, --output=OUTPUT        output file path
 
 Args:

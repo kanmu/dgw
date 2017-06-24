@@ -124,8 +124,7 @@ func TestPgTableToStruct(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Logf("%+v", st.Table)
-		src, err := PgExecuteStructTmpl(&StructTmpl{Struct: st}, "template/struct.tmpl")
+		src, err := PgExecuteDefaultTmpl(&StructTmpl{Struct: st}, "template/struct.tmpl")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -147,7 +146,38 @@ func TestPgTableToMethod(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		src, err := PgExecuteStructTmpl(&StructTmpl{Struct: st}, "template/method.tmpl")
+		src, err := PgExecuteDefaultTmpl(&StructTmpl{Struct: st}, "template/method.tmpl")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("%s", src)
+	}
+}
+
+var testTmpl = `// {{ .Struct.Name }}  {{ .Struct.Table.Schema }}.{{ .Struct.Table.Name }}
+// this is custom template with "Tbl" suffix
+type {{ .Struct.Name }}Tbl struct {
+{{- range .Struct.Fields }}
+	{{ .Name }} {{ .Type }} // {{ .Column.Name }}
+{{- end }}
+}
+`
+
+func TestPgExecuteCustomTemplate(t *testing.T) {
+	conn, cleanup := testPgSetup(t)
+	defer cleanup()
+
+	schema := "public"
+	tbls, err := PgLoadTableDef(conn, schema)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tbl := range tbls {
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		src, err := PgExecuteCustomTmpl(&StructTmpl{Struct: st}, testTmpl)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -1,0 +1,35 @@
+// {{ .Struct.Name }}Table represents {{ .Struct.Table.Schema }}.{{ .Struct.Table.Name }}
+type {{ .Struct.Name }}Table struct {
+{{- range .Struct.Fields }}
+	{{ .Name }} {{ .Type }} // {{ .Column.Name }}
+{{- end }}
+}
+
+// Create inserts the {{ .Struct.Name }} to the database.
+func (r *{{ .Struct.Name }}Table) Create(db Queryer) error {
+    {{- if .Struct.Table.AutoGenPk }}
+        err := db.QueryRow(
+            `{{ createInsertSQL .Struct }}`,
+            {{ createInsertParams .Struct }}).Scan({{ createInsertScan .Struct }})
+    {{- else }}
+        _, err := db.Exec(
+            `{{ createInsertSQL .Struct }}`,
+            {{ createInsertParams .Struct }})
+    {{- end }}
+	if err != nil {
+        return err
+	}
+	return nil
+}
+
+// Get{{ .Struct.Name }}TableByPk select the {{ .Struct.Name }} from the database.
+func Get{{ .Struct.Name }}TableByPk(db Queryer, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
+    var r {{ .Struct.Name }}
+    err := db.QueryRow(
+        `{{ createSelectByPkSQL .Struct }}`,
+        {{ createSelectByPkSQLParams .Struct }}).Scan({{ createSelectByPkScan .Struct }})
+	if err != nil {
+        return nil, err
+	}
+	return &r, nil
+}
