@@ -37,6 +37,7 @@ Flags:
   -x, --exclude=EXCLUDE ...  table names to exclude
       --template=TEMPLATE    custom template path
   -o, --output=OUTPUT        output file path
+      --no-interface         output without Queryer interface
 
 Args:
   <conn>  PostgreSQL connection string in URL format

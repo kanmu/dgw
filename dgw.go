@@ -32,6 +32,15 @@ func OpenDB(connStr string) (*sql.DB, error) {
 	return conn, nil
 }
 
+const queryInterface = `
+// Queryer database/sql compatible query interface
+type Queryer interface {
+	Exec(string, ...interface{}) (sql.Result, error)
+	Query(string, ...interface{}) (*sql.Rows, error)
+	QueryRow(string, ...interface{}) *sql.Row
+}
+`
+
 const pgLoadColumnDef = `
 SELECT
     a.attnum AS field_ordinal,

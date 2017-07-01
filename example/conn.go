@@ -7,13 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Queryer database/sql compatible query interface
-type Queryer interface {
-	Exec(string, ...interface{}) (sql.Result, error)
-	Query(string, ...interface{}) (*sql.Rows, error)
-	QueryRow(string, ...interface{}) *sql.Row
-}
-
 // OpenDB opens database connection
 func OpenDB(connStr string) (*sql.DB, error) {
 	conn, err := sql.Open("postgres", connStr)

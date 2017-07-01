@@ -14,11 +14,12 @@ var (
 		"conn", "PostgreSQL connection string in URL format").Required().String()
 	schema = kingpin.Flag(
 		"schema", "PostgreSQL schema name").Default("public").Short('s').String()
-	pkgName         = kingpin.Flag("package", "package name").Default("main").Short('p').String()
-	typeMapFilePath = kingpin.Flag("typemap", "column type and go type map file path").Short('t').String()
-	exTbls          = kingpin.Flag("exclude", "table names to exclude").Short('x').Strings()
-	customTmpl      = kingpin.Flag("template", "custom template path").String()
-	outFile         = kingpin.Flag("output", "output file path").Short('o').String()
+	pkgName          = kingpin.Flag("package", "package name").Default("main").Short('p').String()
+	typeMapFilePath  = kingpin.Flag("typemap", "column type and go type map file path").Short('t').String()
+	exTbls           = kingpin.Flag("exclude", "table names to exclude").Short('x').Strings()
+	customTmpl       = kingpin.Flag("template", "custom template path").String()
+	outFile          = kingpin.Flag("output", "output file path").Short('o').String()
+	noQueryInterface = kingpin.Flag("no-interface", "output without Queryer interface").Bool()
 )
 
 func main() {
@@ -29,9 +30,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	src, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName, *customTmpl, *exTbls)
+	st, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName, *customTmpl, *exTbls)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	var src []byte
+	if *noQueryInterface {
+		src = st
+	} else {
+		q := []byte(queryInterface)
+		src = append(st, q...)
 	}
 
 	var out io.Writer
