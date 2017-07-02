@@ -1,6 +1,31 @@
 DROP TABLE if EXISTS t1;
 DROP TABLE if EXISTS t2;
 DROP TABLE if EXISTS t3;
+DROP TABLE if EXISTS user_account;
+DROP TABLE if EXISTS user_account_composite_pk;
+DROP TABLE if EXISTS user_account_uuid;
+
+CREATE TABLE user_account (
+  id bigserial primary key
+  , email text not null unique
+  , last_name text not null
+  , first_name text not null
+);
+
+CREATE TABLE user_account_uuid (
+  uuid uuid primary key
+  , email text not null unique
+  , last_name text not null
+  , first_name text not null
+);
+
+CREATE TABLE user_account_composite_pk (
+  id bigint not null
+  , email text not null
+  , last_name text not null
+  , first_name text not null
+  , PRIMARY KEY(id, email)
+);
 
 CREATE TABLE t1 (
   id bigserial primary key

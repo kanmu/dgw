@@ -1,5 +1,5 @@
 [string]
-db_types = ["character", "character varying", "text", "money"]
+db_types = ["character", "character varying", "text", "money", "uuid"]
 notnull_go_type = "string"
 nullable_go_type = "sql.NullString"
 
