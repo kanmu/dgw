@@ -54,7 +54,7 @@ func TestPgLoadColumnDef(t *testing.T) {
 	defer cleanup()
 
 	schema := "public"
-	table := "t1"
+	table := "user_account_uuid_address"
 	cols, err := PgLoadColumnDef(conn, schema, table)
 	if err != nil {
 		t.Fatal(err)

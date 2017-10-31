@@ -74,7 +74,7 @@ notnull_go_type = "byte"
 nullable_go_type = "byte"
 
 [json]
-db_types = ["json"]
+db_types = ["json", "jsonb"]
 notnull_go_type = "[]byte"
 nullable_go_type = "[]byte"
 

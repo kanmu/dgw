@@ -49,22 +49,26 @@ SELECT
     a.attnotnull AS not_null,
     COALESCE(pg_get_expr(ad.adbin, ad.adrelid), '') AS default_value,
     COALESCE(ct.contype = 'p', false) AS  is_primary_key,
-    CASE WHEN a.atttypid = ANY ('{int,int8,int2}'::regtype[])
-      AND EXISTS (
-         SELECT 1 FROM pg_attrdef ad
-         WHERE  ad.adrelid = a.attrelid
-         AND    ad.adnum   = a.attnum
-         AND    ad.adsrc = 'nextval('''
-            || (pg_get_serial_sequence (a.attrelid::regclass::text
-                                      , a.attname))::regclass
-            || '''::regclass)'
-         )
-    THEN CASE a.atttypid
-            WHEN 'int'::regtype  THEN 'serial'
-            WHEN 'int8'::regtype THEN 'bigserial'
-            WHEN 'int2'::regtype THEN 'smallserial'
-         END
-    ELSE format_type(a.atttypid, a.atttypmod)
+    CASE
+        WHEN a.atttypid = ANY ('{int,int8,int2}'::regtype[])
+          AND EXISTS (
+             SELECT 1 FROM pg_attrdef ad
+             WHERE  ad.adrelid = a.attrelid
+             AND    ad.adnum   = a.attnum
+             AND    ad.adsrc = 'nextval('''
+                || (pg_get_serial_sequence (a.attrelid::regclass::text
+                                          , a.attname))::regclass
+                || '''::regclass)'
+             )
+            THEN CASE a.atttypid
+                    WHEN 'int'::regtype  THEN 'serial'
+                    WHEN 'int8'::regtype THEN 'bigserial'
+                    WHEN 'int2'::regtype THEN 'smallserial'
+                 END
+        WHEN a.atttypid = ANY ('{uuid}'::regtype[])
+		  AND COALESCE(pg_get_expr(ad.adbin, ad.adrelid), '') != ''
+            THEN 'autogenuuid'
+        ELSE format_type(a.atttypid, a.atttypmod)
     END AS data_type
 FROM pg_attribute a
 JOIN ONLY pg_class c ON c.oid = a.attrelid
@@ -116,7 +120,7 @@ type PgTable struct {
 }
 
 var autoGenKeyCfg = &AutoKeyMap{
-	Types: []string{"serial", "bigserial", "uuid"},
+	Types: []string{"smallserial", "serial", "bigserial", "autogenuuid"},
 }
 
 func (t *PgTable) setPrimaryKeyInfo(cfg *AutoKeyMap) {
