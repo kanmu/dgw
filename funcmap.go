@@ -116,25 +116,30 @@ func placeholders(l []string) string {
 func createInsertSQL(st *Struct) string {
 	var sql string
 	sql = "INSERT INTO " + st.Table.Name + " ("
-	var colNames []string
-	for _, c := range st.Table.Columns {
-		if c.IsPrimaryKey && st.Table.AutoGenPk {
-			continue
-		} else {
-			colNames = append(colNames, c.Name)
-		}
-	}
-	sql = sql + flatten(colNames, ", ") + ") VALUES ("
 
-	var fieldNames []string
-	for _, f := range st.Fields {
-		if f.Column.IsPrimaryKey && st.Table.AutoGenPk {
-			continue
-		} else {
-			fieldNames = append(fieldNames, f.Name)
+	if len(st.Table.Columns) == 1 && st.Table.Columns[0].IsPrimaryKey && st.Table.AutoGenPk{
+		sql = sql + st.Table.Columns[0].Name + ") VALUES (DEFAULT)"
+	} else {
+		var colNames []string
+		for _, c := range st.Table.Columns {
+			if c.IsPrimaryKey && st.Table.AutoGenPk {
+				continue
+			} else {
+				colNames = append(colNames, c.Name)
+			}
 		}
+		sql = sql + flatten(colNames, ", ") + ") VALUES ("
+
+		var fieldNames []string
+		for _, f := range st.Fields {
+			if f.Column.IsPrimaryKey && st.Table.AutoGenPk {
+				continue
+			} else {
+				fieldNames = append(fieldNames, f.Name)
+			}
+		}
+		sql = sql + placeholders(fieldNames) + ")"
 	}
-	sql = sql + placeholders(fieldNames) + ")"
 
 	if st.Table.AutoGenPk {
 		sql = sql + " RETURNING "
