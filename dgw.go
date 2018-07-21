@@ -65,8 +65,7 @@ SELECT
                     WHEN 'int8'::regtype THEN 'bigserial'
                     WHEN 'int2'::regtype THEN 'smallserial'
                  END
-        WHEN a.atttypid = ANY ('{uuid}'::regtype[])
-		  AND COALESCE(pg_get_expr(ad.adbin, ad.adrelid), '') != ''
+        WHEN a.atttypid = ANY ('{uuid}'::regtype[]) AND COALESCE(pg_get_expr(ad.adbin, ad.adrelid), '') != ''
             THEN 'autogenuuid'
         ELSE format_type(a.atttypid, a.atttypmod)
     END AS data_type
