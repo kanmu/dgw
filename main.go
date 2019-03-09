@@ -18,6 +18,7 @@ var (
 	typeMapFilePath  = kingpin.Flag("typemap", "column type and go type map file path").Short('t').String()
 	exTbls           = kingpin.Flag("exclude", "table names to exclude").Short('x').Strings()
 	customTmpl       = kingpin.Flag("template", "custom template path").String()
+	customEnumTmpl   = kingpin.Flag("enum-template", "custom enum template").String()
 	outFile          = kingpin.Flag("output", "output file path").Short('o').String()
 	noQueryInterface = kingpin.Flag("no-interface", "output without Queryer interface").Bool()
 )
@@ -30,10 +31,21 @@ func main() {
 		log.Fatal(err)
 	}
 
-	st, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName, *customTmpl, *exTbls)
+	cfg, err := getPgTypeMapConfig(*typeMapFilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	st, err := PgCreateStruct(conn, *schema, cfg, *pkgName, *customTmpl, *exTbls)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	en, err := PgCreateEnums(conn, *schema, cfg, *customEnumTmpl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	st = append(st, en...)
 
 	var src []byte
 	if *noQueryInterface {
