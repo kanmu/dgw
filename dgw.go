@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"go/format"
 	"io/ioutil"
+	"regexp"
 	"sort"
+	"strings"
 	"text/template"
 
 	"github.com/BurntSushi/toml"
@@ -98,6 +100,28 @@ type TypeMap struct {
 	DBTypes        []string `toml:"db_types"`
 	NotNullGoType  string   `toml:"notnull_go_type"`
 	NullableGoType string   `toml:"nullable_go_type"`
+
+	compiled   bool
+	rePatterns []*regexp.Regexp
+}
+
+func (t *TypeMap) Match(s string) bool {
+	if !t.compiled {
+		for _, v := range t.DBTypes {
+			if strings.HasPrefix(v, "re/") {
+				t.rePatterns = append(t.rePatterns, regexp.MustCompile(v[3:]))
+			}
+		}
+	}
+	if contains(s, t.DBTypes) {
+		return true
+	}
+	for _,v := range t.rePatterns {
+		if v.MatchString(s) {
+			return true
+		}
+	}
+	return false
 }
 
 // AutoKeyMap auto generating key config
@@ -106,7 +130,7 @@ type AutoKeyMap struct {
 }
 
 // PgTypeMapConfig go/db type map struct toml config
-type PgTypeMapConfig map[string]TypeMap
+type PgTypeMapConfig map[string]*TypeMap
 
 // PgTable postgres table
 type PgTable struct {
@@ -241,11 +265,10 @@ func contains(v string, l []string) bool {
 }
 
 // PgConvertType converts type
-func PgConvertType(col *PgColumn, typeCfg *PgTypeMapConfig) string {
-	cfg := map[string]TypeMap(*typeCfg)
-	typ := cfg["default"].NotNullGoType
-	for _, v := range cfg {
-		if contains(col.DataType, v.DBTypes) {
+func PgConvertType(col *PgColumn, typeCfg PgTypeMapConfig) string {
+	typ := typeCfg["default"].NotNullGoType
+	for _, v := range typeCfg {
+		if v.Match(col.DataType) {
 			if col.NotNull {
 				return v.NotNullGoType
 			}
@@ -256,7 +279,7 @@ func PgConvertType(col *PgColumn, typeCfg *PgTypeMapConfig) string {
 }
 
 // PgColToField converts pg column to go struct field
-func PgColToField(col *PgColumn, typeCfg *PgTypeMapConfig) (*StructField, error) {
+func PgColToField(col *PgColumn, typeCfg PgTypeMapConfig) (*StructField, error) {
 	stfType := PgConvertType(col, typeCfg)
 	stf := &StructField{
 		Name:   varfmt.PublicVarName(col.Name),
@@ -267,7 +290,7 @@ func PgColToField(col *PgColumn, typeCfg *PgTypeMapConfig) (*StructField, error)
 }
 
 // PgTableToStruct converts table def to go struct
-func PgTableToStruct(t *PgTable, typeCfg *PgTypeMapConfig, keyConfig *AutoKeyMap) (*Struct, error) {
+func PgTableToStruct(t *PgTable, typeCfg PgTypeMapConfig, keyConfig *AutoKeyMap) (*Struct, error) {
 	t.setPrimaryKeyInfo(keyConfig)
 	s := &Struct{
 		Name:  varfmt.PublicVarName(t.Name),
@@ -277,7 +300,7 @@ func PgTableToStruct(t *PgTable, typeCfg *PgTypeMapConfig, keyConfig *AutoKeyMap
 	for _, c := range t.Columns {
 		f, err := PgColToField(c, typeCfg)
 		if err != nil {
-			return nil, errors.Wrap(err, "faield to convert col to field")
+			return nil, errors.Wrap(err, "failed to convert col to field")
 		}
 		fs = append(fs, f)
 	}
@@ -336,13 +359,13 @@ func PgCreateStruct(
 	if err != nil {
 		return src, errors.Wrap(err, "faield to load table definitions")
 	}
-	cfg := &PgTypeMapConfig{}
+	cfg := make(PgTypeMapConfig)
 	if typeMapPath == "" {
-		if _, err := toml.Decode(typeMap, cfg); err != nil {
+		if _, err := toml.Decode(typeMap, &cfg); err != nil {
 			return src, errors.Wrap(err, "faield to read type map")
 		}
 	} else {
-		if _, err := toml.DecodeFile(typeMapPath, cfg); err != nil {
+		if _, err := toml.DecodeFile(typeMapPath, &cfg); err != nil {
 			return src, errors.Wrap(err, fmt.Sprintf("failed to decode type map file %s", typeMapPath))
 		}
 	}
