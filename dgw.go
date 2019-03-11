@@ -446,6 +446,17 @@ func PgEnumToType(e *PgEnum, typeCfg PgTypeMapConfig, keyConfig *AutoKeyMap) (*E
 			Value: v,
 		})
 	}
+	if _,ok := typeCfg[e.Name]; !ok {
+		typeCfg[e.Name] = &TypeMap{
+			DBTypes:        []string{e.Name},
+			NotNullGoType:  en.Name,
+			NullableGoType: "Null"+en.Name,
+
+			compiled:       true,
+			rePatterns:     nil,
+		}
+	}
+
 	return en, nil
 }
 

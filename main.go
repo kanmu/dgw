@@ -36,15 +36,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	en, err := PgCreateEnums(conn, *schema, cfg, *customEnumTmpl)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	st, err := PgCreateStruct(conn, *schema, cfg, *pkgName, *customTmpl, *exTbls)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	en, err := PgCreateEnums(conn, *schema, cfg, *customEnumTmpl)
-	if err != nil {
-		log.Fatal(err)
-	}
 	st = append(st, en...)
 
 	var src []byte
