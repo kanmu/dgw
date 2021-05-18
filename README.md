@@ -194,7 +194,5 @@ $ psql -d template1
 > CREATE USER dgw_test;
 > CREATE DATABASE  dgw_test OWNER dgw_test;
 > \q
-$ go get -u github.com/golang/dep/cmd/dep
-$ dep ensure
-$ go test
+$ go test -v
 ```
