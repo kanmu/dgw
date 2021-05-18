@@ -1,6 +1,6 @@
 # dgw
 
-[![Build Status](https://travis-ci.org/achiku/dgw.svg?branch=master)](https://travis-ci.org/achiku/dgw)
+[![test](https://github.com/achiku/dgw/actions/workflows/test.yml/badge.svg)](https://github.com/achiku/dgw/actions/workflows/test.yml)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/achiku/dgw/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/achiku/dgw)](https://goreportcard.com/report/github.com/achiku/dgw)
 
