@@ -1,11 +1,21 @@
 // Create inserts the {{ .Struct.Name }} to the database.
 func (r *{{ .Struct.Name }}) Create(db Queryer) error {
+  return r.CreateContext(context.Background(), db)
+}
+
+// Get{{ .Struct.Name }}ByPk select the {{ .Struct.Name }} from the database.
+func Get{{ .Struct.Name }}ByPk(db Queryer, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
+  return Get{{ .Struct.Name }}ByPkContext(context.Background(), db, {{ createSelectByPkSQLParams .Struct }})
+}
+
+// CreateContext inserts the {{ .Struct.Name }} to the database.
+func (r *{{ .Struct.Name }}) CreateContext(ctx context.Context, db Queryer) error {
     {{- if .Struct.Table.AutoGenPk }}
-        err := db.QueryRow(
+        err := db.QueryRowContext(ctx, 
             `{{ createInsertSQL .Struct }}`,
             {{ createInsertParams .Struct }}).Scan({{ createInsertScan .Struct }})
     {{- else }}
-        _, err := db.Exec(
+        _, err := db.ExecContext(ctx, 
             `{{ createInsertSQL .Struct }}`,
             {{ createInsertParams .Struct }})
     {{- end }}
@@ -15,10 +25,10 @@ func (r *{{ .Struct.Name }}) Create(db Queryer) error {
 	return nil
 }
 
-// Get{{ .Struct.Name }}ByPk select the {{ .Struct.Name }} from the database.
-func Get{{ .Struct.Name }}ByPk(db Queryer, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
+// Get{{ .Struct.Name }}ByPkContext select the {{ .Struct.Name }} from the database.
+func Get{{ .Struct.Name }}ByPkContext(ctx context.Context, db Queryer, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
     var r {{ .Struct.Name }}
-    err := db.QueryRow(
+    err := db.QueryRowContext(ctx,
         `{{ createSelectByPkSQL .Struct }}`,
         {{ createSelectByPkSQLParams .Struct }}).Scan({{ createSelectByPkScan .Struct }})
 	if err != nil {
