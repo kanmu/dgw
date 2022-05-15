@@ -3,6 +3,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/lib/pq"
@@ -24,6 +25,9 @@ type Queryer interface {
 	Exec(string, ...interface{}) (sql.Result, error)
 	Query(string, ...interface{}) (*sql.Rows, error)
 	QueryRow(string, ...interface{}) *sql.Row
+	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
+	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
+	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
 }
 
 // OpenDB opens database connection
@@ -69,6 +73,9 @@ type Queryer interface {
 	Exec(string, ...interface{}) (sql.Result, error)
 	Query(string, ...interface{}) (*sql.Rows, error)
 	QueryRow(string, ...interface{}) *sql.Row
+	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
+	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
+	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
 }
 `
 
@@ -86,7 +93,7 @@ SELECT
              SELECT 1 FROM pg_attrdef ad
              WHERE  ad.adrelid = a.attrelid
              AND    ad.adnum   = a.attnum
-             AND    ad.adsrc = 'nextval('''
+             AND    pg_get_expr(ad.adbin, ad.adrelid) = 'nextval('''
                 || (pg_get_serial_sequence (a.attrelid::regclass::text
                                           , a.attname))::regclass
                 || '''::regclass)'
@@ -296,6 +303,13 @@ func PgLoadColumnDef(db Queryer, schema string, table string) ([]*PgColumn, erro
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to scan")
 		}
+
+		// Some data types have an extra part e.g, "character varying(16)" and
+		// "numeric(10, 5)". We want to drop the extra part.
+		if i := strings.Index(c.DataType, "("); i > 0 {
+			c.DataType = c.DataType[0:i]
+		}
+
 		cols = append(cols, c)
 	}
 	return cols, nil

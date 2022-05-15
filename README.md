@@ -1,6 +1,6 @@
 # dgw
 
-[![Build Status](https://travis-ci.org/achiku/dgw.svg?branch=master)](https://travis-ci.org/achiku/dgw)
+[![test](https://github.com/achiku/dgw/actions/workflows/test.yml/badge.svg)](https://github.com/achiku/dgw/actions/workflows/test.yml)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/achiku/dgw/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/achiku/dgw)](https://goreportcard.com/report/github.com/achiku/dgw)
 
@@ -194,7 +194,5 @@ $ psql -d template1
 > CREATE USER dgw_test;
 > CREATE DATABASE  dgw_test OWNER dgw_test;
 > \q
-$ go get -u github.com/golang/dep/cmd/dep
-$ dep ensure
-$ go test
+$ go test -v
 ```
