@@ -16,7 +16,8 @@ var (
 		"schema", "PostgreSQL schema name").Default("public").Short('s').String()
 	pkgName          = kingpin.Flag("package", "package name").Default("main").Short('p').String()
 	typeMapFilePath  = kingpin.Flag("typemap", "column type and go type map file path").Short('t').String()
-	exTbls           = kingpin.Flag("exclude", "table names to exclude").Short('x').Strings()
+	inTbls           = kingpin.Flag("include", "table names to include, cannot be specified with --exclude").Short('i').Strings()
+	exTbls           = kingpin.Flag("exclude", "table names to exclude, cannot be specified with --include").Short('x').Strings()
 	customTmpl       = kingpin.Flag("template", "custom template path").String()
 	outFile          = kingpin.Flag("output", "output file path").Short('o').String()
 	noQueryInterface = kingpin.Flag("no-interface", "output without Queryer interface").Bool()
@@ -25,12 +26,16 @@ var (
 func main() {
 	kingpin.Parse()
 
+	if len(*inTbls) > 0 && len(*exTbls) > 0 {
+		log.Fatal("Can only specify one of --include or --exclude")
+	}
+
 	conn, err := OpenDB(*connStr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	st, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName, *customTmpl, *exTbls)
+	st, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName, *customTmpl, *inTbls, *exTbls)
 	if err != nil {
 		log.Fatal(err)
 	}
