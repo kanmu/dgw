@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.29
       - name: Prepare planter
         run: |
           psql -U postgres -h localhost -d postgres -c 'CREATE USER dgw_test;'
