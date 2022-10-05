@@ -117,7 +117,7 @@ func createInsertSQL(st *Struct) string {
 	var sql string
 	sql = "INSERT INTO " + st.Table.Name + " ("
 
-	if len(st.Table.Columns) == 1 && st.Table.Columns[0].IsPrimaryKey && st.Table.AutoGenPk{
+	if len(st.Table.Columns) == 1 && st.Table.Columns[0].IsPrimaryKey && st.Table.AutoGenPk {
 		sql = sql + st.Table.Columns[0].Name + ") VALUES (DEFAULT)"
 	} else {
 		var colNames []string

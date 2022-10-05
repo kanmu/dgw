@@ -20,7 +20,12 @@ var (
 	customTmpl       = kingpin.Flag("template", "custom template path").String()
 	outFile          = kingpin.Flag("output", "output file path").Short('o').String()
 	noQueryInterface = kingpin.Flag("no-interface", "output without Queryer interface").Bool()
+	version          string
 )
+
+func init() {
+	kingpin.Version(version)
+}
 
 func main() {
 	kingpin.Parse()

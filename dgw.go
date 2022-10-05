@@ -142,7 +142,6 @@ func (t *PgTable) setPrimaryKeyInfo(cfg *AutoKeyMap) {
 			}
 		}
 	}
-	return
 }
 
 // PgColumn postgres columns
