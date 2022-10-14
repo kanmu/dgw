@@ -12,6 +12,15 @@ builds:
       - darwin
 checksum:
   name_template: "checksums.txt"
+brews:
+  - tap:
+      owner: kanmu
+      name: homebrew-tools
+    homepage: https://github.com/kanmu/dgw
+    description: dgw generates Golang struct, and simple Table/Row Data Gateway functions from PostgreSQL table metadata
+    license: MIT
+    install: |
+      bin.install 'dgw'
 nfpms:
   - id: dgw-nfpms
     file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Arch }}"

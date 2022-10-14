@@ -11,6 +11,12 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: ">=1.19.1"
+      - id: gh-app-auth
+        uses: summerwind/gh-app-auth@main
+        with:
+          app-id: 244816
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          account: kanmu
       - uses: goreleaser/goreleaser-action@v2
         with:
           distribution: goreleaser
