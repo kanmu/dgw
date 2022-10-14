@@ -68,15 +68,18 @@ var _bindata = map[string]func() ([]byte, error){
 	"template/method.tmpl": template_method_tmpl,
 	"template/struct.tmpl": template_struct_tmpl,
 }
+
 // AssetDir returns the file names below a certain
 // directory embedded in the file by go-bindata.
 // For example if you run go-bindata on data/... and data contains the
 // following hierarchy:
-//     data/
-//       foo.txt
-//       img/
-//         a.png
-//         b.png
+//
+//	data/
+//	  foo.txt
+//	  img/
+//	    a.png
+//	    b.png
+//
 // then AssetDir("data") would return []string{"foo.txt", "img"}
 // AssetDir("data/img") would return []string{"a.png", "b.png"}
 // AssetDir("foo.txt") and AssetDir("notexist") would return an error
@@ -104,14 +107,13 @@ func AssetDir(name string) ([]string, error) {
 }
 
 type _bintree_t struct {
-	Func func() ([]byte, error)
+	Func     func() ([]byte, error)
 	Children map[string]*_bintree_t
 }
+
 var _bintree = &_bintree_t{nil, map[string]*_bintree_t{
-	"template": &_bintree_t{nil, map[string]*_bintree_t{
-		"method.tmpl": &_bintree_t{template_method_tmpl, map[string]*_bintree_t{
-		}},
-		"struct.tmpl": &_bintree_t{template_struct_tmpl, map[string]*_bintree_t{
-		}},
+	"template": {nil, map[string]*_bintree_t{
+		"method.tmpl": {template_method_tmpl, map[string]*_bintree_t{}},
+		"struct.tmpl": {template_struct_tmpl, map[string]*_bintree_t{}},
 	}},
 }}

@@ -1,0 +1,25 @@
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - ldflags:
+      - -X main.version={{.Version}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+checksum:
+  name_template: "checksums.txt"
+nfpms:
+  - id: dgw-nfpms
+    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Arch }}"
+    homepage: https://github.com/achiku/dgw
+    maintainer: Akira Chiku <akira.chiku@gmail.com>
+    description: dgw generates Golang struct, and simple Table/Row Data Gateway functions from PostgreSQL table metadata
+    license: MIT
+    formats:
+      - deb
+      - rpm
+    bindir: /usr/bin
