@@ -1,0 +1,24 @@
+type {{.Name}} string
+
+type Null{{.Name}} struct {
+    Value {{.Name}}
+    Valid bool
+}
+
+const (
+    {{range .Values}}
+    {{.Name}} ({{.Type.Name}}) = "{{.Value}}"{{end}}
+)
+
+var {{.Name}}Values = []{{.Name}} {
+    {{range .Values}} {{.Name}}, {{end}}
+}
+
+func Valid{{.Name}}(s string) bool {
+    for _,v := range {{.Name}}Values {
+        if string(v) == s {
+            return true
+        }
+    }
+    return false
+}
