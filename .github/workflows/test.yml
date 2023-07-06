@@ -44,3 +44,44 @@ jobs:
 
       - name: Run test
         run: go test -v
+  check-test-gen:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+            # Container operations, such as postgres, are only supported on Linux runners
+            # - macOS-latest
+            # - windows-latest
+        go:
+          - "1.19.1"
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Prepare planter
+        run: |
+          psql -U postgres -h localhost -d postgres -c 'CREATE USER dgw_test;'
+          psql -U postgres -h localhost -d postgres -c 'CREATE DATABASE dgw_test OWNER dgw_test;'
+      - name: Install Go
+        uses: actions/setup-go/@v2
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Checkout code
+        uses: actions/checkout/@v3
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v3
+
+      - name: Generate
+        run: go generate -v ./example
+      - name: Check diff
+        run: git diff --exit-code
