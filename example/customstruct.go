@@ -133,36 +133,6 @@ func GetT4TableByPk(db Queryer, pk0 int, pk1 int) (*T4, error) {
 	return &r, nil
 }
 
-// T5Table represents public.t5
-type T5Table struct {
-	ID     int64  // id
-	Select int    // select
-	From   string // from
-}
-
-// Create inserts the T5 to the database.
-func (r *T5Table) Create(db Queryer) error {
-	err := db.QueryRow(
-		`INSERT INTO t5 (select, from) VALUES ($1, $2) RETURNING id`,
-		&r.Select, &r.From).Scan(&r.ID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// GetT5TableByPk select the T5 from the database.
-func GetT5TableByPk(db Queryer, pk0 int64) (*T5, error) {
-	var r T5
-	err := db.QueryRow(
-		`SELECT id, select, from FROM t5 WHERE id = $1`,
-		pk0).Scan(&r.ID, &r.Select, &r.From)
-	if err != nil {
-		return nil, err
-	}
-	return &r, nil
-}
-
 // Queryer database/sql compatible query interface
 type Queryer interface {
 	Exec(string, ...interface{}) (sql.Result, error)
