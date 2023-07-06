@@ -33,11 +33,7 @@ func TestT1(t *testing.T) {
 	now := time.Now()
 	t1 := T1{
 		I:           100,
-		JSONData:    []byte("{\"key\": \"value\"}"),
-		XMLData:     []byte("<test>value</test>"),
 		NullableStr: sql.NullString{String: "test"},
-		NullableTz:  &now,
-		NumFloat:    100.10,
 		Str:         "test",
 		TWithTz:     now.AddDate(0, 0, 7),
 		TWithoutTz:  now.AddDate(0, 0, 7),

@@ -16,7 +16,9 @@ jobs:
             # - macOS-latest
             # - windows-latest
         go:
-          - "1.19.1"
+          - "1.19.10"
+          - "1.20.5"
+          - "1.21.0-rc.2"
     services:
       postgres:
         image: postgres:12
@@ -31,16 +33,53 @@ jobs:
         run: |
           psql -U postgres -h localhost -d postgres -c 'CREATE USER dgw_test;'
           psql -U postgres -h localhost -d postgres -c 'CREATE DATABASE dgw_test OWNER dgw_test;'
-      - name: Install Go
-        uses: actions/setup-go/@v2
-        with:
-          go-version: ${{ matrix.go }}
-
       - name: Checkout code
         uses: actions/checkout/@v3
-
+      - name: Install Go
+        uses: actions/setup-go/@v4
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Download Go modules
+        shell: bash
+        if: ${{ steps.setup-go.outputs.cache-hit != 'true' }}
+        run: go mod download
       - name: Lint
         uses: golangci/golangci-lint-action@v3
-
       - name: Run test
         run: go test -v
+
+  check-test-gen:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Prepare planter
+        run: |
+          psql -U postgres -h localhost -d postgres -c 'CREATE USER dgw_test;'
+          psql -U postgres -h localhost -d postgres -c 'CREATE DATABASE dgw_test OWNER dgw_test;'
+      - name: Checkout code
+        uses: actions/checkout/@v3
+      - name: Install Go
+        uses: actions/setup-go/@v4
+        with:
+          go-version: "1.20.5"
+      - name: Download Go modules
+        shell: bash
+        if: ${{ steps.setup-go.outputs.cache-hit != 'true' }}
+        run: go mod download
+      - name: Install deps
+        run: |
+          psql -U postgres -h localhost -d dgw_test -f ./test.sql
+          go install golang.org/x/tools/cmd/goimports@latest
+          go install
+      - name: Generate
+        run: go generate -v ./example
+      - name: Check diff
+        run: git diff --exit-code
