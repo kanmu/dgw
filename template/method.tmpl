@@ -20,7 +20,7 @@ func (r *{{ .Struct.Name }}) CreateContext(ctx context.Context, db Queryer) erro
             {{ createInsertParams .Struct }})
     {{- end }}
 	if err != nil {
-        return errors.Wrap(err, "failed to insert {{ .Struct.Table.Name }}")
+        return errors.WithStack(err)
 	}
 	return nil
 }
@@ -32,7 +32,7 @@ func Get{{ .Struct.Name }}ByPkContext(ctx context.Context, db Queryer, {{ create
         `{{ createSelectByPkSQL .Struct }}`,
         {{ createSelectByPkSQLParams .Struct }}).Scan({{ createSelectByPkScan .Struct }})
 	if err != nil {
-        return nil, errors.Wrap(err, "failed to select {{ .Struct.Table.Name }}")
+        return nil, errors.WithStack(err)
 	}
 	return &r, nil
 }

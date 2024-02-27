@@ -11,7 +11,7 @@ import (
 func OpenDB(connStr string) (*sql.DB, error) {
 	conn, err := sql.Open("postgres", connStr)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect to database")
+		return nil, errors.WithStack(err)
 	}
 	return conn, nil
 }

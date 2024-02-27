@@ -32,7 +32,7 @@ type Queryer interface {
 func OpenDB(connStr string) (*sql.DB, error) {
 	conn, err := sql.Open("postgres", connStr)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect to database")
+		return nil, errors.WithStack(err)
 	}
 	return conn, nil
 }
@@ -180,7 +180,7 @@ type StructField struct {
 func PgLoadTypeMapFromFile(filePath string) (*PgTypeMapConfig, error) {
 	var conf PgTypeMapConfig
 	if _, err := toml.DecodeFile(filePath, &conf); err != nil {
-		return nil, errors.Wrap(err, "faild to parse config file")
+		return nil, errors.WithStack(err)
 	}
 	return &conf, nil
 }
@@ -189,7 +189,7 @@ func PgLoadTypeMapFromFile(filePath string) (*PgTypeMapConfig, error) {
 func PgLoadColumnDef(db Queryer, schema string, table string) ([]*PgColumn, error) {
 	colDefs, err := db.Query(pgLoadColumnDef, schema, table)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to load table def")
+		return nil, errors.WithStack(err)
 	}
 
 	cols := []*PgColumn{}
@@ -205,7 +205,7 @@ func PgLoadColumnDef(db Queryer, schema string, table string) ([]*PgColumn, erro
 			&c.DDLType,
 		)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to scan")
+			return nil, errors.WithStack(err)
 		}
 
 		// Some data types have an extra part e.g, "character varying(16)" and
@@ -223,7 +223,7 @@ func PgLoadColumnDef(db Queryer, schema string, table string) ([]*PgColumn, erro
 func PgLoadTableDef(db Queryer, schema string) ([]*PgTable, error) {
 	tbDefs, err := db.Query(pgLoadTableDef, schema)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to load table def")
+		return nil, errors.WithStack(err)
 	}
 	tbs := []*PgTable{}
 	for tbDefs.Next() {
@@ -233,7 +233,7 @@ func PgLoadTableDef(db Queryer, schema string) ([]*PgTable, error) {
 			&t.Name,
 		)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to scan")
+			return nil, errors.WithStack(err)
 		}
 		cols, err := PgLoadColumnDef(db, schema, t.Name)
 		if err != nil {
@@ -291,7 +291,7 @@ func PgTableToStruct(t *PgTable, typeCfg *PgTypeMapConfig, keyConfig *AutoKeyMap
 	for _, c := range t.Columns {
 		f, err := PgColToField(c, typeCfg)
 		if err != nil {
-			return nil, errors.Wrap(err, "faield to convert col to field")
+			return nil, errors.WithStack(err)
 		}
 		fs = append(fs, f)
 	}
@@ -304,11 +304,11 @@ func PgExecuteDefaultTmpl(st *StructTmpl, path string) ([]byte, error) {
 	var src []byte
 	d, err := Asset(path)
 	if err != nil {
-		return src, errors.Wrap(err, "failed to load asset")
+		return src, errors.WithStack(err)
 	}
 	tpl, err := template.New("struct").Funcs(tmplFuncMap).Parse(string(d))
 	if err != nil {
-		return src, errors.Wrap(err, "failed to parse template")
+		return src, errors.WithStack(err)
 	}
 	buf := new(bytes.Buffer)
 	if err := tpl.Execute(buf, st); err != nil {
@@ -326,7 +326,7 @@ func PgExecuteCustomTmpl(st *StructTmpl, customTmpl string) ([]byte, error) {
 	var src []byte
 	tpl, err := template.New("struct").Funcs(tmplFuncMap).Parse(customTmpl)
 	if err != nil {
-		return src, errors.Wrap(err, "failed to parse template")
+		return src, errors.WithStack(err)
 	}
 	buf := new(bytes.Buffer)
 	if err := tpl.Execute(buf, st); err != nil {
@@ -348,12 +348,12 @@ func PgCreateStruct(
 
 	tbls, err := PgLoadTableDef(db, schema)
 	if err != nil {
-		return src, errors.Wrap(err, "faield to load table definitions")
+		return src, errors.WithStack(err)
 	}
 	cfg := &PgTypeMapConfig{}
 	if typeMapPath == "" {
 		if _, err := toml.Decode(typeMap, cfg); err != nil {
-			return src, errors.Wrap(err, "faield to read type map")
+			return src, errors.WithStack(err)
 		}
 	} else {
 		if _, err := toml.DecodeFile(typeMapPath, cfg); err != nil {
@@ -366,7 +366,7 @@ func PgCreateStruct(
 		}
 		st, err := PgTableToStruct(tbl, cfg, autoGenKeyCfg)
 		if err != nil {
-			return src, errors.Wrap(err, "faield to convert table definition to struct")
+			return src, errors.WithStack(err)
 		}
 		if customTmpl != "" {
 			tmpl, err := ioutil.ReadFile(customTmpl)
@@ -375,17 +375,17 @@ func PgCreateStruct(
 			}
 			s, err := PgExecuteCustomTmpl(&StructTmpl{Struct: st}, string(tmpl))
 			if err != nil {
-				return nil, errors.Wrap(err, "PgExecuteCustomTmpl failed")
+				return nil, errors.WithStack(err)
 			}
 			src = append(src, s...)
 		} else {
 			s, err := PgExecuteDefaultTmpl(&StructTmpl{Struct: st}, "template/struct.tmpl")
 			if err != nil {
-				return src, errors.Wrap(err, "faield to execute template")
+				return src, errors.WithStack(err)
 			}
 			m, err := PgExecuteDefaultTmpl(&StructTmpl{Struct: st}, "template/method.tmpl")
 			if err != nil {
-				return src, errors.Wrap(err, "faield to execute template")
+				return src, errors.WithStack(err)
 			}
 			src = append(src, s...)
 			src = append(src, m...)
