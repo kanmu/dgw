@@ -31,7 +31,8 @@ Flags:
   -s, --schema="public"      PostgreSQL schema name
   -p, --package="main"       package name
   -t, --typemap=TYPEMAP      column type and go type map file path
-  -x, --exclude=EXCLUDE ...  table names to exclude
+  -i, --include=INCLUDE ...  table names to include, cannot be specified with --exclude
+  -x, --exclude=EXCLUDE ...  table names to exclude, cannot be specified with --include
       --template=TEMPLATE    custom template path
   -o, --output=OUTPUT        output file path
       --no-interface         output without Queryer interface
