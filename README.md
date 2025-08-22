@@ -186,7 +186,25 @@ func GetT3ByPk(db Queryer, pk0 int, pk1 int) (*T3, error) {
 
 ## Test
 
+### Using Docker (Recommended)
+
+```bash
+# Start PostgreSQL 16 with pre-configured test database and user
+$ docker compose up -d
+
+# Wait for PostgreSQL to be ready
+$ docker compose exec postgres pg_isready -U dgw_test
+
+# Run tests
+$ go test -v
+
+# Stop PostgreSQL when done
+$ docker compose down
 ```
+
+### Manual Setup
+
+```bash
 $ psql -d template1
 > CREATE USER dgw_test;
 > CREATE DATABASE  dgw_test OWNER dgw_test;
