@@ -1,13 +1,13 @@
-// go:generate go-bindata -o bindata.go template mapconfig
 package main
 
 import (
 	"bytes"
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"go/format"
-	"io/ioutil"
+	"os"
 	"sort"
 	"strings"
 	"text/template"
@@ -299,14 +299,36 @@ func PgTableToStruct(t *PgTable, typeCfg *PgTypeMapConfig, keyConfig *AutoKeyMap
 	return s, nil
 }
 
-// PgExecuteDefaultTmpl execute struct template with *Struct
-func PgExecuteDefaultTmpl(st *StructTmpl, path string) ([]byte, error) {
+//go:embed template/struct.tmpl
+var structTemplate string
+
+// PgExecuteDefaultStructTmpl execute struct template with *Struct
+func PgExecuteDefaultStructTmpl(st *StructTmpl) ([]byte, error) {
 	var src []byte
-	d, err := Asset(path)
+
+	tpl, err := template.New("struct").Funcs(tmplFuncMap).Parse(structTemplate)
 	if err != nil {
 		return src, errors.WithStack(err)
 	}
-	tpl, err := template.New("struct").Funcs(tmplFuncMap).Parse(string(d))
+	buf := new(bytes.Buffer)
+	if err := tpl.Execute(buf, st); err != nil {
+		return src, errors.Wrap(err, fmt.Sprintf("failed to execute template:\n%s", src))
+	}
+	src, err = format.Source(buf.Bytes())
+	if err != nil {
+		return src, errors.Wrap(err, fmt.Sprintf("failed to format code:\n%s", src))
+	}
+	return src, nil
+}
+
+//go:embed template/method.tmpl
+var methodTemplate string
+
+// PgExecuteDefaultMethodTmpl execute method template with *Struct
+func PgExecuteDefaultMethodTmpl(st *StructTmpl) ([]byte, error) {
+	var src []byte
+
+	tpl, err := template.New("struct").Funcs(tmplFuncMap).Parse(methodTemplate)
 	if err != nil {
 		return src, errors.WithStack(err)
 	}
@@ -369,7 +391,7 @@ func PgCreateStruct(
 			return src, errors.WithStack(err)
 		}
 		if customTmpl != "" {
-			tmpl, err := ioutil.ReadFile(customTmpl)
+			tmpl, err := os.ReadFile(customTmpl)
 			if err != nil {
 				return nil, err
 			}
@@ -379,11 +401,11 @@ func PgCreateStruct(
 			}
 			src = append(src, s...)
 		} else {
-			s, err := PgExecuteDefaultTmpl(&StructTmpl{Struct: st}, "template/struct.tmpl")
+			s, err := PgExecuteDefaultStructTmpl(&StructTmpl{Struct: st})
 			if err != nil {
 				return src, errors.WithStack(err)
 			}
-			m, err := PgExecuteDefaultTmpl(&StructTmpl{Struct: st}, "template/method.tmpl")
+			m, err := PgExecuteDefaultMethodTmpl(&StructTmpl{Struct: st})
 			if err != nil {
 				return src, errors.WithStack(err)
 			}
