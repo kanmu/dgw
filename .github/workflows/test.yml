@@ -16,10 +16,12 @@ jobs:
             # - macOS-latest
             # - windows-latest
         go:
-          - "1.19.1"
+          - "1.25.0"
+          - "1.24.6"
+          - "1.23.12"
     services:
       postgres:
-        image: postgres:12
+        image: postgres:16
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
