@@ -12,7 +12,7 @@ func testPgSetup(t *testing.T) (*sql.DB, func()) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	setupSQL, err := os.ReadFile("./ddl.sql")
+	setupSQL, err := os.ReadFile("ddl.sql")
 	if err != nil {
 		t.Fatal(err)
 	}

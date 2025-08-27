@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"os"
+	"path/filepath"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -17,7 +18,7 @@ func testPgSetup(t *testing.T) (*sql.DB, func()) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	setupSQL, err := os.ReadFile("./sql/test.sql")
+	setupSQL, err := os.ReadFile(filepath.Join("sql", "test.sql"))
 	if err != nil {
 		t.Fatal(err)
 	}
