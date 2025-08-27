@@ -2,7 +2,7 @@ package dgwexample
 
 import (
 	"database/sql"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 )
@@ -12,7 +12,7 @@ func testPgSetup(t *testing.T) (*sql.DB, func()) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	setupSQL, err := ioutil.ReadFile("./ddl.sql")
+	setupSQL, err := os.ReadFile("ddl.sql")
 	if err != nil {
 		t.Fatal(err)
 	}

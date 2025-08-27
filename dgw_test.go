@@ -2,7 +2,8 @@ package main
 
 import (
 	"database/sql"
-	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -17,7 +18,7 @@ func testPgSetup(t *testing.T) (*sql.DB, func()) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	setupSQL, err := ioutil.ReadFile("./test.sql")
+	setupSQL, err := os.ReadFile(filepath.Join("sql", "test.sql"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +125,7 @@ func TestPgTableToStruct(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		src, err := PgExecuteDefaultTmpl(&StructTmpl{Struct: st}, "template/struct.tmpl")
+		src, err := PgExecuteDefaultStructTmpl(&StructTmpl{Struct: st})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -146,7 +147,7 @@ func TestPgTableToMethod(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		src, err := PgExecuteDefaultTmpl(&StructTmpl{Struct: st}, "template/method.tmpl")
+		src, err := PgExecuteDefaultMethodTmpl(&StructTmpl{Struct: st})
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: dgw-postgres
+    environment:
+      POSTGRES_USER: dgw_test
+      POSTGRES_PASSWORD: dgw_test
+      POSTGRES_DB: dgw_test
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dgw_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

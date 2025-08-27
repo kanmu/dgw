@@ -1,0 +1,14 @@
+# Git files
+.git
+.gitignore
+
+# Go files
+vendor/
+*.exe
+dgw
+
+# Documentation
+*.md
+
+# Docker volumes
+postgres_data/
