@@ -14,7 +14,7 @@ builds:
 checksum:
   name_template: "checksums.txt"
 brews:
-  - tap:
+  - repository:
       owner: kanmu
       name: homebrew-tools
     homepage: https://github.com/kanmu/dgw
