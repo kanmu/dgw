@@ -1,0 +1,7 @@
+version: "2"
+linters:
+  exclusions:
+    rules:
+      - linters:
+          - errcheck
+        path: _test\.go
