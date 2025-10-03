@@ -2,8 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -183,5 +185,84 @@ func TestPgExecuteCustomTemplate(t *testing.T) {
 			t.Fatal(err)
 		}
 		t.Logf("%s", src)
+	}
+}
+
+func TestCreateInsertOnConflictDoNothingSQL(t *testing.T) {
+	conn, cleanup := testPgSetup(t)
+	defer cleanup()
+
+	structs := testSetupStruct(t, conn)
+
+	for _, st := range structs {
+		sql := createInsertOnConflictDoNothingSQL(st)
+
+		// Check that SQL contains ON CONFLICT DO NOTHING
+		if !strings.Contains(sql, "ON CONFLICT DO NOTHING") {
+			t.Errorf("Expected SQL to contain 'ON CONFLICT DO NOTHING', got: %s", sql)
+		}
+
+		// Check that SQL starts with INSERT INTO
+		if !strings.HasPrefix(sql, "INSERT INTO") {
+			t.Errorf("Expected SQL to start with 'INSERT INTO', got: %s", sql)
+		}
+
+		// Log the generated SQL for manual inspection
+		t.Logf("Table: %s, Generated SQL: %s", st.Table.Name, sql)
+
+		// For tables with auto-generated primary keys, check RETURNING clause
+		if st.Table.AutoGenPk {
+			if !strings.Contains(sql, "RETURNING") {
+				t.Errorf("Expected SQL for table %s with AutoGenPk to contain 'RETURNING', got: %s", st.Table.Name, sql)
+			}
+		}
+	}
+}
+
+func TestCreateOnConflictDoNothingMethodGeneration(t *testing.T) {
+	conn, cleanup := testPgSetup(t)
+	defer cleanup()
+
+	schema := "public"
+	tbls, err := PgLoadTableDef(conn, schema)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, tbl := range tbls {
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		src, err := PgExecuteDefaultMethodTmpl(&StructTmpl{Struct: st})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		srcStr := string(src)
+
+		// Check that CreateOnConflictDoNothing method is generated
+		if !strings.Contains(srcStr, "CreateOnConflictDoNothing") {
+			t.Errorf("Expected generated code to contain CreateOnConflictDoNothing method for %s", st.Name)
+		}
+
+		// Check that the method has the correct signature
+		expectedSignature := fmt.Sprintf("func (r *%s) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error)", st.Name)
+		if !strings.Contains(srcStr, expectedSignature) {
+			t.Errorf("Expected method signature '%s' not found in generated code", expectedSignature)
+		}
+
+		// Check that the method contains the ON CONFLICT DO NOTHING SQL
+		if !strings.Contains(srcStr, "ON CONFLICT DO NOTHING") {
+			t.Errorf("Expected generated method to contain 'ON CONFLICT DO NOTHING' SQL")
+		}
+
+		// Check for the comment explaining the behavior
+		if !strings.Contains(srcStr, "If a conflict occurs") {
+			t.Errorf("Expected generated method to contain comment explaining conflict behavior")
+		}
+
+		t.Logf("Generated CreateOnConflictDoNothing for %s", st.Name)
 	}
 }

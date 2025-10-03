@@ -6,13 +6,14 @@ import (
 )
 
 var tmplFuncMap = template.FuncMap{
-	"createInsertSQL":            createInsertSQL,
-	"createInsertParams":         createInsertParams,
-	"createInsertScan":           createInsertScan,
-	"createSelectByPkSQL":        createSelectByPkSQL,
-	"createSelectByPkFuncParams": createSelectByPkFuncParams,
-	"createSelectByPkSQLParams":  createSelectByPkSQLParams,
-	"createSelectByPkScan":       createSelectByPkScan,
+	"createInsertSQL":                    createInsertSQL,
+	"createInsertOnConflictDoNothingSQL": createInsertOnConflictDoNothingSQL,
+	"createInsertParams":                 createInsertParams,
+	"createInsertScan":                   createInsertScan,
+	"createSelectByPkSQL":                createSelectByPkSQL,
+	"createSelectByPkFuncParams":         createSelectByPkFuncParams,
+	"createSelectByPkSQLParams":          createSelectByPkSQLParams,
+	"createSelectByPkScan":               createSelectByPkScan,
 }
 
 func createSelectByPkSQL(st *Struct) string {
@@ -140,6 +141,49 @@ func createInsertSQL(st *Struct) string {
 		}
 		sql = sql + placeholders(fieldNames) + ")"
 	}
+
+	if st.Table.AutoGenPk {
+		sql = sql + " RETURNING "
+		for i, c := range st.Table.PrimaryKeys {
+			if i == 0 {
+				sql = sql + c.Name
+			} else {
+				sql = sql + ", " + c.Name
+			}
+		}
+	}
+	return sql
+}
+
+func createInsertOnConflictDoNothingSQL(st *Struct) string {
+	var sql string
+	sql = "INSERT INTO " + st.Table.Name + " ("
+
+	if len(st.Table.Columns) == 1 && st.Table.Columns[0].IsPrimaryKey && st.Table.AutoGenPk {
+		sql = sql + st.Table.Columns[0].Name + ") VALUES (DEFAULT)"
+	} else {
+		var colNames []string
+		for _, c := range st.Table.Columns {
+			if c.IsPrimaryKey && st.Table.AutoGenPk {
+				continue
+			} else {
+				colNames = append(colNames, c.Name)
+			}
+		}
+		sql = sql + flatten(colNames, ", ") + ") VALUES ("
+
+		var fieldNames []string
+		for _, f := range st.Fields {
+			if f.Column.IsPrimaryKey && st.Table.AutoGenPk {
+				continue
+			} else {
+				fieldNames = append(fieldNames, f.Name)
+			}
+		}
+		sql = sql + placeholders(fieldNames) + ")"
+	}
+
+	sql = sql + " ON CONFLICT DO NOTHING"
 
 	if st.Table.AutoGenPk {
 		sql = sql + " RETURNING "
