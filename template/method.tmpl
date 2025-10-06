@@ -25,6 +25,37 @@ func (r *{{ .Struct.Name }}) CreateContext(ctx context.Context, db Queryer) erro
 	return nil
 }
 
+// CreateOnConflictDoNothing inserts the {{ .Struct.Name }} to the database.
+// If a conflict occurs (e.g., unique constraint violation), the insert is skipped without error.
+// Returns true if the row was inserted, false if it was skipped due to conflict.
+func (r *{{ .Struct.Name }}) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error) {
+    {{- if .Struct.Table.AutoGenPk }}
+        err := db.QueryRowContext(ctx,
+            `{{ createInsertOnConflictDoNothingSQL .Struct }}`,
+            {{ createInsertParams .Struct }}).Scan({{ createInsertScan .Struct }})
+        if err != nil {
+            if err == sql.ErrNoRows {
+                return false, nil
+            }
+            return false, errors.WithStack(err)
+        }
+        // Row was successfully inserted
+        return true, nil
+    {{- else }}
+        result, err := db.ExecContext(ctx,
+            `{{ createInsertOnConflictDoNothingSQL .Struct }}`,
+            {{ createInsertParams .Struct }})
+        if err != nil {
+            return false, errors.WithStack(err)
+        }
+        rowsAffected, err := result.RowsAffected()
+        if err != nil {
+            return false, errors.WithStack(err)
+        }
+        return rowsAffected > 0, nil
+    {{- end }}
+}
+
 // Get{{ .Struct.Name }}ByPkContext select the {{ .Struct.Name }} from the database.
 func Get{{ .Struct.Name }}ByPkContext(ctx context.Context, db Queryer, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
     var r {{ .Struct.Name }}
