@@ -2,10 +2,9 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
+	"regexp"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -194,32 +193,43 @@ func TestCreateInsertOnConflictDoNothingSQL(t *testing.T) {
 
 	structs := testSetupStruct(t, conn)
 
-	for _, st := range structs {
-		sql := createInsertOnConflictDoNothingSQL(st)
+	if len(structs) != 4 {
+		t.Fatalf("Expected the number of testing structs is 4, got: %d", len(structs))
+	}
 
-		// Check that SQL contains ON CONFLICT DO NOTHING
-		if !strings.Contains(sql, "ON CONFLICT DO NOTHING") {
-			t.Errorf("Expected SQL to contain 'ON CONFLICT DO NOTHING', got: %s", sql)
-		}
-
-		// Check that SQL starts with INSERT INTO
-		if !strings.HasPrefix(sql, "INSERT INTO") {
-			t.Errorf("Expected SQL to start with 'INSERT INTO', got: %s", sql)
-		}
-
-		// Log the generated SQL for manual inspection
-		t.Logf("Table: %s, Generated SQL: %s", st.Table.Name, sql)
-
-		// For tables with auto-generated primary keys, check RETURNING clause
-		if st.Table.AutoGenPk {
-			if !strings.Contains(sql, "RETURNING") {
-				t.Errorf("Expected SQL for table %s with AutoGenPk to contain 'RETURNING', got: %s", st.Table.Name, sql)
+	tests := []struct {
+		tableStruct *Struct
+		expectSQL   string
+	}{
+		{
+			tableStruct: structs[0],
+			expectSQL:   "INSERT INTO t1 (i, str, nullable_str, t_with_tz, t_without_tz, tm) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING RETURNING id",
+		},
+		{
+			tableStruct: structs[1],
+			expectSQL:   "INSERT INTO t2 (i, str, t_with_tz, t_without_tz) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING id",
+		},
+		{
+			tableStruct: structs[2],
+			expectSQL:   "INSERT INTO t3 (str, t_with_tz, t_without_tz) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING id, i",
+		},
+		{
+			tableStruct: structs[3],
+			expectSQL:   "INSERT INTO t4 (id, i) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.tableStruct.Table.Name, func(t *testing.T) {
+			sql := createInsertOnConflictDoNothingSQL(tt.tableStruct)
+			if sql != tt.expectSQL {
+				t.Errorf("Expected SQL: %s, got: %s", tt.expectSQL, sql)
 			}
-		}
+			t.Logf("Table: %s, Generated SQL: %s", tt.tableStruct.Name, sql)
+		})
 	}
 }
 
-func TestCreateOnConflictDoNothingMethodGeneration(t *testing.T) {
+func TestMethodGeneration(t *testing.T) {
 	conn, cleanup := testPgSetup(t)
 	defer cleanup()
 
@@ -229,40 +239,244 @@ func TestCreateOnConflictDoNothingMethodGeneration(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg)
-		if err != nil {
-			t.Fatal(err)
-		}
+	if len(tbls) != 4 {
+		t.Fatalf("Expected the number of testing PgTable is 4, got: %d", len(tbls))
+	}
 
-		src, err := PgExecuteDefaultMethodTmpl(&StructTmpl{Struct: st})
-		if err != nil {
-			t.Fatal(err)
-		}
+	tests := []struct {
+		table  *PgTable
+		expect string
+	}{
+		{
+			table: tbls[0],
+			expect: `// Create inserts the T1 to the database.
+func (r *T1) Create(db Queryer) error {
+        return r.CreateContext(context.Background(), db)
+}
 
-		srcStr := string(src)
+// GetT1ByPk select the T1 from the database.
+func GetT1ByPk(db Queryer, pk0 int64) (*T1, error) {
+        return GetT1ByPkContext(context.Background(), db, pk0)
+}
 
-		// Check that CreateOnConflictDoNothing method is generated
-		if !strings.Contains(srcStr, "CreateOnConflictDoNothing") {
-			t.Errorf("Expected generated code to contain CreateOnConflictDoNothing method for %s", st.Name)
-		}
+// CreateContext inserts the T1 to the database.
+func (r *T1) CreateContext(ctx context.Context, db Queryer) error {
+        err := db.QueryRowContext(ctx,
+                ` + "`INSERT INTO t1 (i, str, nullable_str, t_with_tz, t_without_tz, tm) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`" + `,
+                &r.I, &r.Str, &r.NullableStr, &r.TWithTz, &r.TWithoutTz, &r.Tm).Scan(&r.ID)
+        if err != nil {
+                return errors.WithStack(err)
+        }
+        return nil
+}
 
-		// Check that the method has the correct signature
-		expectedSignature := fmt.Sprintf("func (r *%s) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error)", st.Name)
-		if !strings.Contains(srcStr, expectedSignature) {
-			t.Errorf("Expected method signature '%s' not found in generated code", expectedSignature)
-		}
+// CreateOnConflictDoNothing inserts the T1 to the database.
+// If a conflict occurs (e.g., unique constraint violation), the insert is skipped without error.
+// Returns true if the row was inserted, false if it was skipped due to conflict.
+func (r *T1) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error) {
+        err := db.QueryRowContext(ctx,
+                ` + "`INSERT INTO t1 (i, str, nullable_str, t_with_tz, t_without_tz, tm) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING RETURNING id`" + `,
+                &r.I, &r.Str, &r.NullableStr, &r.TWithTz, &r.TWithoutTz, &r.Tm).Scan(&r.ID)
+        if err != nil {
+                if err == sql.ErrNoRows {
+                        return false, nil
+                }
+                return false, errors.WithStack(err)
+        }
+        // Row was successfully inserted
+        return true, nil
+}
 
-		// Check that the method contains the ON CONFLICT DO NOTHING SQL
-		if !strings.Contains(srcStr, "ON CONFLICT DO NOTHING") {
-			t.Errorf("Expected generated method to contain 'ON CONFLICT DO NOTHING' SQL")
-		}
+// GetT1ByPkContext select the T1 from the database.
+func GetT1ByPkContext(ctx context.Context, db Queryer, pk0 int64) (*T1, error) {
+        var r T1
+        err := db.QueryRowContext(ctx,
+                ` + "`SELECT id, i, str, nullable_str, t_with_tz, t_without_tz, tm FROM t1 WHERE id = $1`" + `,
+                        pk0).Scan(&r.ID, &r.I, &r.Str, &r.NullableStr, &r.TWithTz, &r.TWithoutTz, &r.Tm)
+        if err != nil {
+                return nil, errors.WithStack(err)
+        }
+        return &r, nil
+}
 
-		// Check for the comment explaining the behavior
-		if !strings.Contains(srcStr, "If a conflict occurs") {
-			t.Errorf("Expected generated method to contain comment explaining conflict behavior")
-		}
+`,
+		},
+		{
+			table: tbls[1],
+			expect: `// Create inserts the T2 to the database.
+func (r *T2) Create(db Queryer) error {
+        return r.CreateContext(context.Background(), db)
+}
 
-		t.Logf("Generated CreateOnConflictDoNothing for %s", st.Name)
+// GetT2ByPk select the T2 from the database.
+func GetT2ByPk(db Queryer, pk0 int64) (*T2, error) {
+        return GetT2ByPkContext(context.Background(), db, pk0)
+}
+
+// CreateContext inserts the T2 to the database.
+func (r *T2) CreateContext(ctx context.Context, db Queryer) error {
+        err := db.QueryRowContext(ctx,
+                ` + "`INSERT INTO t2 (i, str, t_with_tz, t_without_tz) VALUES ($1, $2, $3, $4) RETURNING id`" + `,
+                &r.I, &r.Str, &r.TWithTz, &r.TWithoutTz).Scan(&r.ID)
+        if err != nil {
+                return errors.WithStack(err)
+        }
+        return nil
+}
+
+// CreateOnConflictDoNothing inserts the T2 to the database.
+// If a conflict occurs (e.g., unique constraint violation), the insert is skipped without error.
+// Returns true if the row was inserted, false if it was skipped due to conflict.
+func (r *T2) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error) {
+        err := db.QueryRowContext(ctx,
+                ` + "`INSERT INTO t2 (i, str, t_with_tz, t_without_tz) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING id`" + `,
+                &r.I, &r.Str, &r.TWithTz, &r.TWithoutTz).Scan(&r.ID)
+        if err != nil {
+                if err == sql.ErrNoRows {
+                        return false, nil
+                }
+                return false, errors.WithStack(err)
+        }
+        // Row was successfully inserted
+        return true, nil
+}
+
+// GetT2ByPkContext select the T2 from the database.
+func GetT2ByPkContext(ctx context.Context, db Queryer, pk0 int64) (*T2, error) {
+        var r T2
+        err := db.QueryRowContext(ctx,
+                ` + "`SELECT id, i, str, t_with_tz, t_without_tz FROM t2 WHERE id = $1`" + `,
+                pk0).Scan(&r.ID, &r.I, &r.Str, &r.TWithTz, &r.TWithoutTz)
+        if err != nil {
+                return nil, errors.WithStack(err)
+        }
+        return &r, nil
+}
+`,
+		},
+		{
+			table: tbls[2],
+			expect: `// Create inserts the T3 to the database.
+func (r *T3) Create(db Queryer) error {
+        return r.CreateContext(context.Background(), db)
+}
+
+// GetT3ByPk select the T3 from the database.
+func GetT3ByPk(db Queryer, pk0 int64, pk1 int) (*T3, error) {
+        return GetT3ByPkContext(context.Background(), db, pk0, pk1)
+}
+
+// CreateContext inserts the T3 to the database.
+func (r *T3) CreateContext(ctx context.Context, db Queryer) error {
+        err := db.QueryRowContext(ctx,
+                ` + "`INSERT INTO t3 (str, t_with_tz, t_without_tz) VALUES ($1, $2, $3) RETURNING id, i`" + `,
+                &r.Str, &r.TWithTz, &r.TWithoutTz).Scan(&r.ID, &r.I)
+        if err != nil {
+                return errors.WithStack(err)
+        }
+        return nil
+}
+
+// CreateOnConflictDoNothing inserts the T3 to the database.
+// If a conflict occurs (e.g., unique constraint violation), the insert is skipped without error.
+// Returns true if the row was inserted, false if it was skipped due to conflict.
+func (r *T3) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error) {
+        err := db.QueryRowContext(ctx,
+                ` + "`INSERT INTO t3 (str, t_with_tz, t_without_tz) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING id, i`" + `,
+                &r.Str, &r.TWithTz, &r.TWithoutTz).Scan(&r.ID, &r.I)
+        if err != nil {
+                if err == sql.ErrNoRows {
+                        return false, nil
+                }
+                return false, errors.WithStack(err)
+        }
+        // Row was successfully inserted
+        return true, nil
+}
+
+// GetT3ByPkContext select the T3 from the database.
+func GetT3ByPkContext(ctx context.Context, db Queryer, pk0 int64, pk1 int) (*T3, error) {
+        var r T3
+        err := db.QueryRowContext(ctx,
+                ` + "`SELECT id, i, str, t_with_tz, t_without_tz FROM t3 WHERE id = $1 AND i = $2`" + `,
+                pk0, pk1).Scan(&r.ID, &r.I, &r.Str, &r.TWithTz, &r.TWithoutTz)
+        if err != nil {
+                return nil, errors.WithStack(err)
+        }
+        return &r, nil
+}
+`,
+		},
+		{
+			table: tbls[3],
+			expect: `// Create inserts the T4 to the database.
+func (r *T4) Create(db Queryer) error {
+        return r.CreateContext(context.Background(), db)
+}
+
+// GetT4ByPk select the T4 from the database.
+func GetT4ByPk(db Queryer, pk0 int, pk1 int) (*T4, error) {
+        return GetT4ByPkContext(context.Background(), db, pk0, pk1)
+}
+
+// CreateContext inserts the T4 to the database.
+func (r *T4) CreateContext(ctx context.Context, db Queryer) error {
+        _, err := db.ExecContext(ctx,
+                ` + "`INSERT INTO t4 (id, i) VALUES ($1, $2)`" + `,
+                &r.ID, &r.I)
+        if err != nil {
+                return errors.WithStack(err)
+        }
+        return nil
+}
+
+// CreateOnConflictDoNothing inserts the T4 to the database.
+// If a conflict occurs (e.g., unique constraint violation), the insert is skipped without error.
+// Returns true if the row was inserted, false if it was skipped due to conflict.
+func (r *T4) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error) {
+        result, err := db.ExecContext(ctx,
+                ` + "`INSERT INTO t4 (id, i) VALUES ($1, $2) ON CONFLICT DO NOTHING`" + `,
+                &r.ID, &r.I)
+        if err != nil {
+                return false, errors.WithStack(err)
+        }
+        rowsAffected, err := result.RowsAffected()
+        if err != nil {
+                return false, errors.WithStack(err)
+        }
+        return rowsAffected > 0, nil
+}
+
+// GetT4ByPkContext select the T4 from the database.
+func GetT4ByPkContext(ctx context.Context, db Queryer, pk0 int, pk1 int) (*T4, error) {
+        var r T4
+        err := db.QueryRowContext(ctx,
+                ` + "`SELECT id, i FROM t4 WHERE id = $1 AND i = $2`" + `,
+                pk0, pk1).Scan(&r.ID, &r.I)
+        if err != nil {
+                return nil, errors.WithStack(err)
+        }
+        return &r, nil
+}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.table.Name, func(t *testing.T) {
+			st, err := PgTableToStruct(tt.table, &defaultTypeMapCfg, autoGenKeyCfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+			src, err := PgExecuteDefaultMethodTmpl(&StructTmpl{Struct: st})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			re1 := regexp.MustCompile(`\s`)
+
+			srcStr := string(src)
+			if re1.ReplaceAllString(srcStr, "") != re1.ReplaceAllString(tt.expect, "") {
+				t.Errorf("Expected generated code: %s, got: %s", tt.expect, srcStr)
+			}
+		})
 	}
 }
