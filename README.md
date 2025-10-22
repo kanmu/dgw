@@ -35,6 +35,8 @@ Flags:
       --template=TEMPLATE    custom template path
   -o, --output=OUTPUT        output file path
       --no-interface         output without Queryer interface
+      --use-go-tool          use 'go tool' for goimports
+      --version              Show application version.
 
 Args:
   <conn>  PostgreSQL connection string in URL format

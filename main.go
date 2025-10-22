@@ -20,6 +20,7 @@ var (
 	customTmpl       = kingpin.Flag("template", "custom template path").String()
 	outFile          = kingpin.Flag("output", "output file path").Short('o').String()
 	noQueryInterface = kingpin.Flag("no-interface", "output without Queryer interface").Bool()
+	useGoTool        = kingpin.Flag("use-go-tool", "use 'go tool' for goimports").Bool()
 	version          string
 )
 
@@ -61,8 +62,15 @@ func main() {
 		log.Fatal(err)
 	}
 	if *outFile != "" {
-		params := []string{"-w", *outFile}
-		if err := exec.Command("goimports", params...).Run(); err != nil {
+		var cmd *exec.Cmd
+		if *useGoTool {
+			params := []string{"tool", "goimports", "-w", *outFile}
+			cmd = exec.Command("go", params...)
+		} else {
+			params := []string{"-w", *outFile}
+			cmd = exec.Command("goimports", params...)
+		}
+		if err := cmd.Run(); err != nil {
 			log.Fatalf("failed to goimports: %s", err)
 		}
 	}
