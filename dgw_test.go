@@ -194,8 +194,8 @@ func TestCreateInsertOnConflictDoNothingSQL(t *testing.T) {
 
 	structs := testSetupStruct(t, conn)
 
-	if len(structs) != 4 {
-		t.Fatalf("Expected the number of testing structs is 4, got: %d", len(structs))
+	if len(structs) != 6 {
+		t.Fatalf("Expected the number of testing structs is 6, got: %d", len(structs))
 	}
 
 	tests := []struct {
@@ -240,8 +240,8 @@ func TestMethodGeneration(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(tbls) != 4 {
-		t.Fatalf("Expected the number of testing PgTable is 4, got: %d", len(tbls))
+	if len(tbls) != 6 {
+		t.Fatalf("Expected the number of testing PgTable is 6, got: %d", len(tbls))
 	}
 
 	tests := []struct {
