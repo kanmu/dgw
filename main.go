@@ -16,7 +16,7 @@ var (
 		"schema", "PostgreSQL schema name").Default("public").Short('s').String()
 	pkgName          = kingpin.Flag("package", "package name").Default("main").Short('p').String()
 	typeMapFilePath  = kingpin.Flag("typemap", "column type and go type map file path").Short('t').String()
-	autGenKeyList    = kingpin.Flag("autogenkey", "auto generate key list").Strings()
+	autGenKeyList    = kingpin.Flag("autogenkey", "auto generate key list").Short('k').Strings()
 	exTbls           = kingpin.Flag("exclude", "table names to exclude").Short('x').Strings()
 	customTmpl       = kingpin.Flag("template", "custom template path").String()
 	outFile          = kingpin.Flag("output", "output file path").Short('o').String()

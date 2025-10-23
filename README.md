@@ -31,6 +31,8 @@ Flags:
   -s, --schema="public"      PostgreSQL schema name
   -p, --package="main"       package name
   -t, --typemap=TYPEMAP      column type and go type map file path
+  -k, --autogenkey=AUTOGENKEY ...
+                             auto generate key list
   -x, --exclude=EXCLUDE ...  table names to exclude
       --template=TEMPLATE    custom template path
   -o, --output=OUTPUT        output file path
