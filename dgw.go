@@ -76,7 +76,8 @@ SELECT
         WHEN a.atttypid = ANY ('{uuid}'::regtype[]) AND COALESCE(pg_get_expr(ad.adbin, ad.adrelid), '') != ''
             THEN 'autogenuuid'
         ELSE format_type(a.atttypid, a.atttypmod)
-    END AS data_type
+    END AS data_type,
+    a.attidentity AS identity
 FROM pg_attribute a
 JOIN ONLY pg_class c ON c.oid = a.attrelid
 JOIN ONLY pg_namespace n ON n.oid = c.relnamespace
@@ -136,7 +137,8 @@ func (t *PgTable) setPrimaryKeyInfo(cfg *AutoKeyMap) {
 		if c.IsPrimaryKey {
 			t.PrimaryKeys = append(t.PrimaryKeys, c)
 			for _, typ := range cfg.Types {
-				if c.DDLType == typ {
+				// https://www.postgresql.jp/docs/16/catalog-pg-attribute.html
+				if c.DDLType == typ || c.Identity == "a" || c.Identity == "d" {
 					t.AutoGenPk = true
 				}
 			}
@@ -153,6 +155,7 @@ type PgColumn struct {
 	NotNull      bool
 	DefaultValue sql.NullString
 	IsPrimaryKey bool
+	Identity     string
 }
 
 // Struct go struct
@@ -203,6 +206,7 @@ func PgLoadColumnDef(db Queryer, schema string, table string) ([]*PgColumn, erro
 			&c.DefaultValue,
 			&c.IsPrimaryKey,
 			&c.DDLType,
+			&c.Identity,
 		)
 		if err != nil {
 			return nil, errors.WithStack(err)

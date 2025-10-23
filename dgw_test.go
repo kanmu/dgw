@@ -724,6 +724,114 @@ func GetT4ByPkContext(ctx context.Context, db Queryer, pk0 int, pk1 int) (*T4, e
 	}
 	return &r, nil
 }
+// T5 represents public.t5
+type T5 struct {
+	ID int // id
+	I  int // i
+}
+// Create inserts the T5 to the database.
+func (r *T5) Create(db Queryer) error {
+	return r.CreateContext(context.Background(), db)
+}
+
+// GetT5ByPk select the T5 from the database.
+func GetT5ByPk(db Queryer, pk0 int, pk1 int) (*T5, error) {
+	return GetT5ByPkContext(context.Background(), db, pk0, pk1)
+}
+
+// CreateContext inserts the T5 to the database.
+func (r *T5) CreateContext(ctx context.Context, db Queryer) error {
+	err := db.QueryRowContext(ctx,
+		` + "`INSERT INTO t5 () VALUES () RETURNING id, i`" + `,
+	).Scan(&r.ID, &r.I)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+// CreateOnConflictDoNothing inserts the T5 to the database.
+// If a conflict occurs (e.g., unique constraint violation), the insert is skipped without error.
+// Returns true if the row was inserted, false if it was skipped due to conflict.
+func (r *T5) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error) {
+	err := db.QueryRowContext(ctx,
+		` + "`INSERT INTO t5 () VALUES () ON CONFLICT DO NOTHING RETURNING id, i`" + `,
+	).Scan(&r.ID, &r.I)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, errors.WithStack(err)
+	}
+	// Row was successfully inserted
+	return true, nil
+}
+
+// GetT5ByPkContext select the T5 from the database.
+func GetT5ByPkContext(ctx context.Context, db Queryer, pk0 int, pk1 int) (*T5, error) {
+	var r T5
+	err := db.QueryRowContext(ctx,
+		` + "`SELECT id, i FROM t5 WHERE id = $1 AND i = $2`" + `,
+		pk0, pk1).Scan(&r.ID, &r.I)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &r, nil
+}
+// T6 represents public.t6
+type T6 struct {
+	ID int // id
+	I  int // i
+}
+// Create inserts the T6 to the database.
+func (r *T6) Create(db Queryer) error {
+	return r.CreateContext(context.Background(), db)
+}
+
+// GetT6ByPk select the T6 from the database.
+func GetT6ByPk(db Queryer, pk0 int, pk1 int) (*T6, error) {
+	return GetT6ByPkContext(context.Background(), db, pk0, pk1)
+}
+
+// CreateContext inserts the T6 to the database.
+func (r *T6) CreateContext(ctx context.Context, db Queryer) error {
+	err := db.QueryRowContext(ctx,
+		` + "`INSERT INTO t6 () VALUES () RETURNING id, i`" + `,
+	).Scan(&r.ID, &r.I)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+// CreateOnConflictDoNothing inserts the T6 to the database.
+// If a conflict occurs (e.g., unique constraint violation), the insert is skipped without error.
+// Returns true if the row was inserted, false if it was skipped due to conflict.
+func (r *T6) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error) {
+	err := db.QueryRowContext(ctx,
+		` + "`INSERT INTO t6 () VALUES () ON CONFLICT DO NOTHING RETURNING id, i`" + `,
+	).Scan(&r.ID, &r.I)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, errors.WithStack(err)
+	}
+	// Row was successfully inserted
+	return true, nil
+}
+
+// GetT6ByPkContext select the T6 from the database.
+func GetT6ByPkContext(ctx context.Context, db Queryer, pk0 int, pk1 int) (*T6, error) {
+	var r T6
+	err := db.QueryRowContext(ctx,
+		` + "`SELECT id, i FROM t6 WHERE id = $1 AND i = $2`" + `,
+		pk0, pk1).Scan(&r.ID, &r.I)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &r, nil
+}
 `
 
 	assert.Equal(expected, string(src))
@@ -965,6 +1073,114 @@ func GetT4ByPkContext(ctx context.Context, db Queryer, pk0 int, pk1 int) (*T4, e
 	var r T4
 	err := db.QueryRowContext(ctx,
 		` + "`SELECT id, i FROM t4 WHERE id = $1 AND i = $2`" + `,
+		pk0, pk1).Scan(&r.ID, &r.I)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &r, nil
+}
+// T5 represents public.t5
+type T5 struct {
+	ID int // id
+	I  int // i
+}
+// Create inserts the T5 to the database.
+func (r *T5) Create(db Queryer) error {
+	return r.CreateContext(context.Background(), db)
+}
+
+// GetT5ByPk select the T5 from the database.
+func GetT5ByPk(db Queryer, pk0 int, pk1 int) (*T5, error) {
+	return GetT5ByPkContext(context.Background(), db, pk0, pk1)
+}
+
+// CreateContext inserts the T5 to the database.
+func (r *T5) CreateContext(ctx context.Context, db Queryer) error {
+	err := db.QueryRowContext(ctx,
+		` + "`INSERT INTO t5 () VALUES () RETURNING id, i`" + `,
+	).Scan(&r.ID, &r.I)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+// CreateOnConflictDoNothing inserts the T5 to the database.
+// If a conflict occurs (e.g., unique constraint violation), the insert is skipped without error.
+// Returns true if the row was inserted, false if it was skipped due to conflict.
+func (r *T5) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error) {
+	err := db.QueryRowContext(ctx,
+		` + "`INSERT INTO t5 () VALUES () ON CONFLICT DO NOTHING RETURNING id, i`" + `,
+	).Scan(&r.ID, &r.I)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, errors.WithStack(err)
+	}
+	// Row was successfully inserted
+	return true, nil
+}
+
+// GetT5ByPkContext select the T5 from the database.
+func GetT5ByPkContext(ctx context.Context, db Queryer, pk0 int, pk1 int) (*T5, error) {
+	var r T5
+	err := db.QueryRowContext(ctx,
+		` + "`SELECT id, i FROM t5 WHERE id = $1 AND i = $2`" + `,
+		pk0, pk1).Scan(&r.ID, &r.I)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &r, nil
+}
+// T6 represents public.t6
+type T6 struct {
+	ID int // id
+	I  int // i
+}
+// Create inserts the T6 to the database.
+func (r *T6) Create(db Queryer) error {
+	return r.CreateContext(context.Background(), db)
+}
+
+// GetT6ByPk select the T6 from the database.
+func GetT6ByPk(db Queryer, pk0 int, pk1 int) (*T6, error) {
+	return GetT6ByPkContext(context.Background(), db, pk0, pk1)
+}
+
+// CreateContext inserts the T6 to the database.
+func (r *T6) CreateContext(ctx context.Context, db Queryer) error {
+	err := db.QueryRowContext(ctx,
+		` + "`INSERT INTO t6 () VALUES () RETURNING id, i`" + `,
+	).Scan(&r.ID, &r.I)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+// CreateOnConflictDoNothing inserts the T6 to the database.
+// If a conflict occurs (e.g., unique constraint violation), the insert is skipped without error.
+// Returns true if the row was inserted, false if it was skipped due to conflict.
+func (r *T6) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error) {
+	err := db.QueryRowContext(ctx,
+		` + "`INSERT INTO t6 () VALUES () ON CONFLICT DO NOTHING RETURNING id, i`" + `,
+	).Scan(&r.ID, &r.I)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, errors.WithStack(err)
+	}
+	// Row was successfully inserted
+	return true, nil
+}
+
+// GetT6ByPkContext select the T6 from the database.
+func GetT6ByPkContext(ctx context.Context, db Queryer, pk0 int, pk1 int) (*T6, error) {
+	var r T6
+	err := db.QueryRowContext(ctx,
+		` + "`SELECT id, i FROM t6 WHERE id = $1 AND i = $2`" + `,
 		pk0, pk1).Scan(&r.ID, &r.I)
 	if err != nil {
 		return nil, errors.WithStack(err)
