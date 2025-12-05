@@ -1,21 +1,30 @@
 // Create inserts the {{ .Struct.Name }} to the database.
+{{- if .Struct.Deprecated }}
+// Deprecated: {{ .Struct.Name }} is no longer maintained
+{{- end }}
 func (r *{{ .Struct.Name }}) Create(db Queryer) error {
   return r.CreateContext(context.Background(), db)
 }
 
 // Get{{ .Struct.Name }}ByPk select the {{ .Struct.Name }} from the database.
+{{- if .Struct.Deprecated }}
+// Deprecated: {{ .Struct.Name }} is no longer maintained
+{{- end }}
 func Get{{ .Struct.Name }}ByPk(db Queryer, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
   return Get{{ .Struct.Name }}ByPkContext(context.Background(), db, {{ createSelectByPkSQLParams .Struct }})
 }
 
 // CreateContext inserts the {{ .Struct.Name }} to the database.
+{{- if .Struct.Deprecated }}
+// Deprecated: {{ .Struct.Name }} is no longer maintained
+{{- end }}
 func (r *{{ .Struct.Name }}) CreateContext(ctx context.Context, db Queryer) error {
     {{- if .Struct.Table.AutoGenPk }}
-        err := db.QueryRowContext(ctx, 
+        err := db.QueryRowContext(ctx,
             `{{ createInsertSQL .Struct }}`,
             {{ createInsertParams .Struct }}).Scan({{ createInsertScan .Struct }})
     {{- else }}
-        _, err := db.ExecContext(ctx, 
+        _, err := db.ExecContext(ctx,
             `{{ createInsertSQL .Struct }}`,
             {{ createInsertParams .Struct }})
     {{- end }}
@@ -28,6 +37,9 @@ func (r *{{ .Struct.Name }}) CreateContext(ctx context.Context, db Queryer) erro
 // CreateOnConflictDoNothing inserts the {{ .Struct.Name }} to the database.
 // If a conflict occurs (e.g., unique constraint violation), the insert is skipped without error.
 // Returns true if the row was inserted, false if it was skipped due to conflict.
+{{- if .Struct.Deprecated }}
+// Deprecated: {{ .Struct.Name }} is no longer maintained
+{{- end }}
 func (r *{{ .Struct.Name }}) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error) {
     {{- if .Struct.Table.AutoGenPk }}
         err := db.QueryRowContext(ctx,
@@ -57,6 +69,9 @@ func (r *{{ .Struct.Name }}) CreateOnConflictDoNothing(ctx context.Context, db Q
 }
 
 // Get{{ .Struct.Name }}ByPkContext select the {{ .Struct.Name }} from the database.
+{{- if .Struct.Deprecated }}
+// Deprecated: {{ .Struct.Name }} is no longer maintained
+{{- end }}
 func Get{{ .Struct.Name }}ByPkContext(ctx context.Context, db Queryer, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
     var r {{ .Struct.Name }}
     err := db.QueryRowContext(ctx,

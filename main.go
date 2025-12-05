@@ -22,6 +22,7 @@ var (
 	outFile          = kingpin.Flag("output", "output file path").Short('o').String()
 	noQueryInterface = kingpin.Flag("no-interface", "output without Queryer interface").Bool()
 	useGoTool        = kingpin.Flag("use-go-tool", "use 'go tool' for goimports").Bool()
+	deprecated       = kingpin.Flag("deprecated", "deprecated table names").Strings()
 	version          string
 )
 
@@ -37,7 +38,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	st, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName, *customTmpl, *exTbls, *autGenKeyList)
+	st, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName, *customTmpl, *exTbls, *autGenKeyList, *deprecated)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,4 +1,7 @@
 // {{ .Struct.Name }} represents {{ .Struct.Table.Schema }}.{{ .Struct.Table.Name }}
+{{- if .Struct.Deprecated }}
+// Deprecated: {{ .Struct.Name }} is no longer maintained
+{{- end }}
 type {{ .Struct.Name }} struct {
 {{- range .Struct.Fields }}
 	{{ .Name }} {{ .Type }} // {{ .Column.Name }}
