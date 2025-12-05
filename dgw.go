@@ -426,7 +426,10 @@ func PgCreateStruct(
 			src = append(src, m...)
 		}
 	}
-	// WORKAROUND: Fix for `format.Source()` bug
+	// WORKAROUND: `format.Source()` strips empty comments (e.g., lines with only `//`), which can break code generation
+	// See Go issue https://github.com/golang/go/issues/54489 for details.
+	// This workaround replaces the placeholder `// %EMPTY_COMMENT%` with a bare comment after formatting.
+	// Remove this workaround once `format.Source()` preserves empty comments in a future Go release.
 	src = bytes.ReplaceAll(src, []byte("// %EMPTY_COMMENT%"), []byte("//"))
 	return src, nil
 }
