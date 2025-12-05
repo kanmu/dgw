@@ -426,5 +426,7 @@ func PgCreateStruct(
 			src = append(src, m...)
 		}
 	}
+	// WORKAROUND: Fix for `format.Source()` bug
+	src = bytes.ReplaceAll(src, []byte("// %EMPTY_COMMENT%"), []byte("//"))
 	return src, nil
 }

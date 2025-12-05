@@ -1,5 +1,6 @@
 // Create inserts the {{ .Struct.Name }} to the database.
 {{- if .Struct.Deprecated }}
+// %EMPTY_COMMENT%
 // Deprecated: {{ .Struct.Name }} is no longer maintained
 {{- end }}
 func (r *{{ .Struct.Name }}) Create(db Queryer) error {
@@ -8,6 +9,7 @@ func (r *{{ .Struct.Name }}) Create(db Queryer) error {
 
 // Get{{ .Struct.Name }}ByPk select the {{ .Struct.Name }} from the database.
 {{- if .Struct.Deprecated }}
+//
 // Deprecated: {{ .Struct.Name }} is no longer maintained
 {{- end }}
 func Get{{ .Struct.Name }}ByPk(db Queryer, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
@@ -16,6 +18,7 @@ func Get{{ .Struct.Name }}ByPk(db Queryer, {{ createSelectByPkFuncParams .Struct
 
 // CreateContext inserts the {{ .Struct.Name }} to the database.
 {{- if .Struct.Deprecated }}
+//
 // Deprecated: {{ .Struct.Name }} is no longer maintained
 {{- end }}
 func (r *{{ .Struct.Name }}) CreateContext(ctx context.Context, db Queryer) error {
@@ -38,6 +41,7 @@ func (r *{{ .Struct.Name }}) CreateContext(ctx context.Context, db Queryer) erro
 // If a conflict occurs (e.g., unique constraint violation), the insert is skipped without error.
 // Returns true if the row was inserted, false if it was skipped due to conflict.
 {{- if .Struct.Deprecated }}
+//
 // Deprecated: {{ .Struct.Name }} is no longer maintained
 {{- end }}
 func (r *{{ .Struct.Name }}) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error) {
@@ -70,6 +74,7 @@ func (r *{{ .Struct.Name }}) CreateOnConflictDoNothing(ctx context.Context, db Q
 
 // Get{{ .Struct.Name }}ByPkContext select the {{ .Struct.Name }} from the database.
 {{- if .Struct.Deprecated }}
+//
 // Deprecated: {{ .Struct.Name }} is no longer maintained
 {{- end }}
 func Get{{ .Struct.Name }}ByPkContext(ctx context.Context, db Queryer, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {

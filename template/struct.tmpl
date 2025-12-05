@@ -1,5 +1,6 @@
 // {{ .Struct.Name }} represents {{ .Struct.Table.Schema }}.{{ .Struct.Table.Name }}
 {{- if .Struct.Deprecated }}
+// %EMPTY_COMMENT%
 // Deprecated: {{ .Struct.Name }} is no longer maintained
 {{- end }}
 type {{ .Struct.Name }} struct {
