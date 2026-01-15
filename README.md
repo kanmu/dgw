@@ -40,6 +40,7 @@ Flags:
       --use-go-tool          use 'go tool' for goimports
       --deprecated=DEPRECATED ...
                              deprecated table names
+      --queryer=QUERYER      Queryer type name
       --version              Show application version.
 
 Args:
