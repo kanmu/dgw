@@ -3,7 +3,7 @@
 // %EMPTY_COMMENT%
 // Deprecated: {{ .Struct.Name }} is no longer maintained
 {{- end }}
-func (r *{{ .Struct.Name }}) Create(db Queryer) error {
+func (r *{{ .Struct.Name }}) Create(db {{ .Struct.Queryer }}) error {
   return r.CreateContext(context.Background(), db)
 }
 
@@ -12,7 +12,7 @@ func (r *{{ .Struct.Name }}) Create(db Queryer) error {
 //
 // Deprecated: {{ .Struct.Name }} is no longer maintained
 {{- end }}
-func Get{{ .Struct.Name }}ByPk(db Queryer, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
+func Get{{ .Struct.Name }}ByPk(db {{ .Struct.Queryer }}, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
   return Get{{ .Struct.Name }}ByPkContext(context.Background(), db, {{ createSelectByPkSQLParams .Struct }})
 }
 
@@ -21,7 +21,7 @@ func Get{{ .Struct.Name }}ByPk(db Queryer, {{ createSelectByPkFuncParams .Struct
 //
 // Deprecated: {{ .Struct.Name }} is no longer maintained
 {{- end }}
-func (r *{{ .Struct.Name }}) CreateContext(ctx context.Context, db Queryer) error {
+func (r *{{ .Struct.Name }}) CreateContext(ctx context.Context, db {{ .Struct.Queryer }}) error {
     {{- if .Struct.Table.AutoGenPk }}
         err := db.QueryRowContext(ctx,
             `{{ createInsertSQL .Struct }}`,
@@ -44,7 +44,7 @@ func (r *{{ .Struct.Name }}) CreateContext(ctx context.Context, db Queryer) erro
 //
 // Deprecated: {{ .Struct.Name }} is no longer maintained
 {{- end }}
-func (r *{{ .Struct.Name }}) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error) {
+func (r *{{ .Struct.Name }}) CreateOnConflictDoNothing(ctx context.Context, db {{ .Struct.Queryer }}) (bool, error) {
     {{- if .Struct.Table.AutoGenPk }}
         err := db.QueryRowContext(ctx,
             `{{ createInsertOnConflictDoNothingSQL .Struct }}`,
@@ -77,7 +77,7 @@ func (r *{{ .Struct.Name }}) CreateOnConflictDoNothing(ctx context.Context, db Q
 //
 // Deprecated: {{ .Struct.Name }} is no longer maintained
 {{- end }}
-func Get{{ .Struct.Name }}ByPkContext(ctx context.Context, db Queryer, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
+func Get{{ .Struct.Name }}ByPkContext(ctx context.Context, db {{ .Struct.Queryer }}, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
     var r {{ .Struct.Name }}
     err := db.QueryRowContext(ctx,
         `{{ createSelectByPkSQL .Struct }}`,

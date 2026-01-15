@@ -23,6 +23,7 @@ var (
 	noQueryInterface = kingpin.Flag("no-interface", "output without Queryer interface").Bool()
 	useGoTool        = kingpin.Flag("use-go-tool", "use 'go tool' for goimports").Bool()
 	deprecated       = kingpin.Flag("deprecated", "deprecated table names").Strings()
+	queryer          = kingpin.Flag("queryer", "Queryer type name").String()
 	version          string
 )
 
@@ -38,7 +39,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	st, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName, *customTmpl, *exTbls, *autGenKeyList, *deprecated)
+	st, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName, *customTmpl, *exTbls, *autGenKeyList, *deprecated, *queryer)
 	if err != nil {
 		log.Fatal(err)
 	}

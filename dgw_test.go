@@ -43,7 +43,7 @@ func testSetupStruct(t *testing.T, conn *sql.DB) []*Struct {
 
 	var sts []*Struct
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{})
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -123,7 +123,7 @@ func TestPgTableToStruct(t *testing.T) {
 	}
 
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{})
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -145,7 +145,7 @@ func TestPgTableToMethod(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{})
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -176,7 +176,7 @@ func TestPgExecuteCustomTemplate(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{})
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -463,7 +463,7 @@ func GetT4ByPkContext(ctx context.Context, db Queryer, pk0 int, pk1 int) (*T4, e
 	}
 	for _, tt := range tests {
 		t.Run(tt.table.Name, func(t *testing.T) {
-			st, err := PgTableToStruct(tt.table, &defaultTypeMapCfg, autoGenKeyCfg, []string{})
+			st, err := PgTableToStruct(tt.table, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -488,7 +488,7 @@ func TestPgCreateStruct(t *testing.T) {
 	assert := assert.New(t)
 
 	schema := "public"
-	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, []string{})
+	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, []string{}, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -843,7 +843,7 @@ func TestPgCreateStructWithAutoGenKey(t *testing.T) {
 	assert := assert.New(t)
 
 	schema := "public"
-	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{"smallserial", "serial", "bigserial", "autogenuuid", "integer"}, []string{})
+	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{"smallserial", "serial", "bigserial", "autogenuuid", "integer"}, []string{}, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1199,7 +1199,7 @@ func TestPgCreateStructWithDeprecated(t *testing.T) {
 
 	schema := "public"
 	deprecated := []string{"t2", "t5"}
-	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, deprecated)
+	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, deprecated, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1570,4 +1570,81 @@ func GetT6ByPkContext(ctx context.Context, db Queryer, pk0 int, pk1 int) (*T6, e
 `
 
 	assert.Equal(expected, string(src))
+}
+
+func TestPgCreateStructWithQueryer(t *testing.T) {
+	conn, cleanup := testPgSetup(t)
+	defer cleanup()
+	assert := assert.New(t)
+
+	schema := "public"
+	deprecated := []string{"t2", "t5"}
+	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, deprecated, "MyQueryer")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := `
+// T1 represents public.t1
+type T1 struct {
+	ID          int64          // id
+	I           int            // i
+	Str         string         // str
+	NullableStr sql.NullString // nullable_str
+	TWithTz     time.Time      // t_with_tz
+	TWithoutTz  time.Time      // t_without_tz
+	Tm          *time.Time     // tm
+}
+// Create inserts the T1 to the database.
+func (r *T1) Create(db MyQueryer) error {
+	return r.CreateContext(context.Background(), db)
+}
+
+// GetT1ByPk select the T1 from the database.
+func GetT1ByPk(db MyQueryer, pk0 int64) (*T1, error) {
+	return GetT1ByPkContext(context.Background(), db, pk0)
+}
+
+// CreateContext inserts the T1 to the database.
+func (r *T1) CreateContext(ctx context.Context, db MyQueryer) error {
+	err := db.QueryRowContext(ctx,
+		` + "`INSERT INTO t1 (i, str, nullable_str, t_with_tz, t_without_tz, tm) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`" + `,
+		&r.I, &r.Str, &r.NullableStr, &r.TWithTz, &r.TWithoutTz, &r.Tm).Scan(&r.ID)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+// CreateOnConflictDoNothing inserts the T1 to the database.
+// If a conflict occurs (e.g., unique constraint violation), the insert is skipped without error.
+// Returns true if the row was inserted, false if it was skipped due to conflict.
+func (r *T1) CreateOnConflictDoNothing(ctx context.Context, db MyQueryer) (bool, error) {
+	err := db.QueryRowContext(ctx,
+		` + "`INSERT INTO t1 (i, str, nullable_str, t_with_tz, t_without_tz, tm) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING RETURNING id`" + `,
+		&r.I, &r.Str, &r.NullableStr, &r.TWithTz, &r.TWithoutTz, &r.Tm).Scan(&r.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, errors.WithStack(err)
+	}
+	// Row was successfully inserted
+	return true, nil
+}
+
+// GetT1ByPkContext select the T1 from the database.
+func GetT1ByPkContext(ctx context.Context, db MyQueryer, pk0 int64) (*T1, error) {
+	var r T1
+	err := db.QueryRowContext(ctx,
+		` + "`SELECT id, i, str, nullable_str, t_with_tz, t_without_tz, tm FROM t1 WHERE id = $1`" + `,
+		pk0).Scan(&r.ID, &r.I, &r.Str, &r.NullableStr, &r.TWithTz, &r.TWithoutTz, &r.Tm)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &r, nil
+}
+`
+
+	assert.Contains(string(src), expected)
 }
