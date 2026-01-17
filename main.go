@@ -64,7 +64,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to create output file %s: %s", *outFile, err)
 		}
-		defer f.Close()
+		defer f.Close() //nolint:errcheck
 		out = f
 	} else {
 		out = os.Stdout
