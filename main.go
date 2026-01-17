@@ -4,8 +4,8 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
 
+	"golang.org/x/tools/imports"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -21,7 +21,6 @@ var (
 	customTmpl       = kingpin.Flag("template", "custom template path").String()
 	outFile          = kingpin.Flag("output", "output file path").Short('o').String()
 	noQueryInterface = kingpin.Flag("no-interface", "output without Queryer interface").Bool()
-	useGoTool        = kingpin.Flag("use-go-tool", "use 'go tool' for goimports").Bool()
 	deprecated       = kingpin.Flag("deprecated", "deprecated table names").Strings()
 	queryer          = kingpin.Flag("queryer", "Queryer type name").String()
 	version          string
@@ -52,29 +51,26 @@ func main() {
 		src = append(st, q...)
 	}
 
+	if *outFile != "" {
+		src, err = imports.Process(*outFile, src, nil)
+		if err != nil {
+			log.Fatalf("failed to goimports: %s", err)
+		}
+	}
+
 	var out io.Writer
 	if *outFile != "" {
-		out, err = os.Create(*outFile)
+		f, err := os.Create(*outFile)
 		if err != nil {
 			log.Fatalf("failed to create output file %s: %s", *outFile, err)
 		}
+		defer f.Close()
+		out = f
 	} else {
 		out = os.Stdout
 	}
+
 	if _, err := out.Write(src); err != nil {
 		log.Fatal(err)
-	}
-	if *outFile != "" {
-		var cmd *exec.Cmd
-		if *useGoTool {
-			params := []string{"tool", "goimports", "-w", *outFile}
-			cmd = exec.Command("go", params...)
-		} else {
-			params := []string{"-w", *outFile}
-			cmd = exec.Command("goimports", params...)
-		}
-		if err := cmd.Run(); err != nil {
-			log.Fatalf("failed to goimports: %s", err)
-		}
 	}
 }
