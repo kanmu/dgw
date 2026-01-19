@@ -37,7 +37,6 @@ Flags:
       --template=TEMPLATE    custom template path
   -o, --output=OUTPUT        output file path
       --no-interface         output without Queryer interface
-      --use-go-tool          use 'go tool' for goimports
       --deprecated=DEPRECATED ...
                              deprecated table names
       --queryer=QUERYER      Queryer type name
