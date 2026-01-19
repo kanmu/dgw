@@ -1,5 +1,5 @@
-github.com/BurntSushi/toml v1.5.0 h1:W5quZX/G/csjUnuI8SUYlsHs9M38FC7znL0lIO+DvMg=
-github.com/BurntSushi/toml v1.5.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
+github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
+github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/achiku/varfmt v0.0.0-20160708124000-f820e1efecee h1:IfTwtLm+DUeY8kZ8NKSxGRr2kaCe8qqIpJz4Uwh1efU=
 github.com/achiku/varfmt v0.0.0-20160708124000-f820e1efecee/go.mod h1:RKS7P4TSY/jV2QjH/ZxoAE2l4EEXZRPwQ/tIzXiFrk0=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 h1:JYp7IbQjafoB+tBA3gMyHYHrpOtNuDiK/uB5uXxq5wM=
