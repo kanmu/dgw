@@ -2,15 +2,20 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"testing"
 
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
+
+// updateGolden regenerates the golden files under testdata/ when set.
+//
+//	go test -run TestPgCreateStructGolden -update-golden
+var updateGolden = flag.Bool("update-golden", false, "update golden files under testdata/")
 
 // before running test, create user and database
 // CREATE USER dgw_test;
@@ -483,49 +488,47 @@ func GetT4ByPkContext(ctx context.Context, db Queryer, pk0 int, pk1 int) (*T4, e
 	}
 }
 
-func TestMethodGenerationContextOnly(t *testing.T) {
+// TestPgCreateStructGolden compares the full generated source against golden
+// files under testdata/. It locks the entire output byte-for-byte for both the
+// default behavior (regression guard) and the --context-only behavior, so a
+// stray blank line or a dropped/added function is caught immediately.
+//
+// Regenerate the golden files after an intentional change with:
+//
+//	go test -run TestPgCreateStructGolden -update-golden
+func TestPgCreateStructGolden(t *testing.T) {
 	conn, cleanup := testPgSetup(t)
 	defer cleanup()
 
 	schema := "public"
-	tbls, err := PgLoadTableDef(conn, schema)
-	if err != nil {
-		t.Fatal(err)
+	tests := []struct {
+		name        string
+		contextOnly bool
+		golden      string
+	}{
+		{"default", false, filepath.Join("testdata", "default.golden")},
+		{"context_only", true, filepath.Join("testdata", "context_only.golden")},
 	}
-	if len(tbls) == 0 {
-		t.Fatal("no tables loaded")
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, []string{}, "", tt.contextOnly)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	// t1 is the first testing table.
-	st, err := PgTableToStruct(tbls[0], &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "", true)
-	if err != nil {
-		t.Fatal(err)
-	}
-	src, err := PgExecuteDefaultMethodTmpl(&StructTmpl{Struct: st})
-	if err != nil {
-		t.Fatal(err)
-	}
-	srcStr := string(src)
+			if *updateGolden {
+				if err := os.WriteFile(tt.golden, src, 0o644); err != nil {
+					t.Fatalf("failed to update golden file %s: %s", tt.golden, err)
+				}
+			}
 
-	// Context-aware APIs must still be generated.
-	for _, want := range []string{
-		"func (r *T1) CreateContext(ctx context.Context, db Queryer) error",
-		"func (r *T1) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error)",
-		"func GetT1ByPkContext(ctx context.Context, db Queryer, pk0 int64) (*T1, error)",
-	} {
-		if !strings.Contains(srcStr, want) {
-			t.Errorf("expected generated code to contain %q, got:\n%s", want, srcStr)
-		}
-	}
-
-	// Non-Context APIs must be suppressed.
-	for _, notWant := range []string{
-		"func (r *T1) Create(db Queryer) error",
-		"func GetT1ByPk(db Queryer, pk0 int64) (*T1, error)",
-	} {
-		if strings.Contains(srcStr, notWant) {
-			t.Errorf("expected generated code NOT to contain %q, got:\n%s", notWant, srcStr)
-		}
+			want, err := os.ReadFile(tt.golden)
+			if err != nil {
+				t.Fatalf("failed to read golden file %s (run with -update-golden to create it): %s", tt.golden, err)
+			}
+			assert.Equal(t, string(want), string(src),
+				"generated code does not match golden file %s; run 'go test -run TestPgCreateStructGolden -update-golden' to regenerate", tt.golden)
+		})
 	}
 }
 

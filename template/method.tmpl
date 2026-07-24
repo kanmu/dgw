@@ -16,7 +16,8 @@ func (r *{{ .Struct.Name }}) Create(db {{ .Struct.Queryer }}) error {
 func Get{{ .Struct.Name }}ByPk(db {{ .Struct.Queryer }}, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
   return Get{{ .Struct.Name }}ByPkContext(context.Background(), db, {{ createSelectByPkSQLParams .Struct }})
 }
-{{ end }}
+
+{{ end -}}
 // CreateContext inserts the {{ .Struct.Name }} to the database.
 {{- if .Struct.Deprecated }}
 //
