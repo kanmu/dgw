@@ -1,6 +1,7 @@
 package dgwexample
 
 import (
+	"context"
 	"database/sql"
 	"os"
 	"testing"
@@ -42,13 +43,13 @@ func TestT1(t *testing.T) {
 		TWithTz:     now.AddDate(0, 0, 7),
 		TWithoutTz:  now.AddDate(0, 0, 7),
 	}
-	if err := t1.Create(conn); err != nil {
+	if err := t1.CreateContext(context.Background(), conn); err != nil {
 		t.Fatal(err)
 	}
 	if t1.ID == 0 {
 		t.Errorf("want other than zero")
 	}
-	target, err := GetT1ByPk(conn, t1.ID)
+	target, err := GetT1ByPkContext(context.Background(), conn, t1.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
