@@ -40,6 +40,7 @@ Flags:
       --deprecated=DEPRECATED ...
                              deprecated table names
       --queryer=QUERYER      Queryer type name
+      --context-only         output only Context-aware APIs (suppress non-Context Create/GetXByPk)
       --version              Show application version.
 
 Args:

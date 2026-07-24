@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -43,7 +44,7 @@ func testSetupStruct(t *testing.T, conn *sql.DB) []*Struct {
 
 	var sts []*Struct
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "", false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -123,7 +124,7 @@ func TestPgTableToStruct(t *testing.T) {
 	}
 
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "", false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -145,7 +146,7 @@ func TestPgTableToMethod(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "", false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -176,7 +177,7 @@ func TestPgExecuteCustomTemplate(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "", false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -463,7 +464,7 @@ func GetT4ByPkContext(ctx context.Context, db Queryer, pk0 int, pk1 int) (*T4, e
 	}
 	for _, tt := range tests {
 		t.Run(tt.table.Name, func(t *testing.T) {
-			st, err := PgTableToStruct(tt.table, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
+			st, err := PgTableToStruct(tt.table, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "", false)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -482,13 +483,59 @@ func GetT4ByPkContext(ctx context.Context, db Queryer, pk0 int, pk1 int) (*T4, e
 	}
 }
 
+func TestMethodGenerationContextOnly(t *testing.T) {
+	conn, cleanup := testPgSetup(t)
+	defer cleanup()
+
+	schema := "public"
+	tbls, err := PgLoadTableDef(conn, schema)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(tbls) == 0 {
+		t.Fatal("no tables loaded")
+	}
+
+	// t1 is the first testing table.
+	st, err := PgTableToStruct(tbls[0], &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	src, err := PgExecuteDefaultMethodTmpl(&StructTmpl{Struct: st})
+	if err != nil {
+		t.Fatal(err)
+	}
+	srcStr := string(src)
+
+	// Context-aware APIs must still be generated.
+	for _, want := range []string{
+		"func (r *T1) CreateContext(ctx context.Context, db Queryer) error",
+		"func (r *T1) CreateOnConflictDoNothing(ctx context.Context, db Queryer) (bool, error)",
+		"func GetT1ByPkContext(ctx context.Context, db Queryer, pk0 int64) (*T1, error)",
+	} {
+		if !strings.Contains(srcStr, want) {
+			t.Errorf("expected generated code to contain %q, got:\n%s", want, srcStr)
+		}
+	}
+
+	// Non-Context APIs must be suppressed.
+	for _, notWant := range []string{
+		"func (r *T1) Create(db Queryer) error",
+		"func GetT1ByPk(db Queryer, pk0 int64) (*T1, error)",
+	} {
+		if strings.Contains(srcStr, notWant) {
+			t.Errorf("expected generated code NOT to contain %q, got:\n%s", notWant, srcStr)
+		}
+	}
+}
+
 func TestPgCreateStruct(t *testing.T) {
 	conn, cleanup := testPgSetup(t)
 	defer cleanup()
 	assert := assert.New(t)
 
 	schema := "public"
-	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, []string{}, "")
+	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, []string{}, "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -843,7 +890,7 @@ func TestPgCreateStructWithAutoGenKey(t *testing.T) {
 	assert := assert.New(t)
 
 	schema := "public"
-	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{"smallserial", "serial", "bigserial", "autogenuuid", "integer"}, []string{}, "")
+	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{"smallserial", "serial", "bigserial", "autogenuuid", "integer"}, []string{}, "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1199,7 +1246,7 @@ func TestPgCreateStructWithDeprecated(t *testing.T) {
 
 	schema := "public"
 	deprecated := []string{"t2", "t5"}
-	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, deprecated, "")
+	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, deprecated, "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1579,7 +1626,7 @@ func TestPgCreateStructWithQueryer(t *testing.T) {
 
 	schema := "public"
 	deprecated := []string{"t2", "t5"}
-	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, deprecated, "MyQueryer")
+	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, deprecated, "MyQueryer", false)
 	if err != nil {
 		t.Fatal(err)
 	}

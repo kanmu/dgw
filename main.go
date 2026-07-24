@@ -23,6 +23,7 @@ var (
 	noQueryInterface = kingpin.Flag("no-interface", "output without Queryer interface").Bool()
 	deprecated       = kingpin.Flag("deprecated", "deprecated table names").Strings()
 	queryer          = kingpin.Flag("queryer", "Queryer type name").String()
+	contextOnly      = kingpin.Flag("context-only", "output only Context-aware APIs (suppress non-Context Create/GetXByPk)").Bool()
 	version          string
 )
 
@@ -38,7 +39,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	st, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName, *customTmpl, *exTbls, *autGenKeyList, *deprecated, *queryer)
+	st, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName, *customTmpl, *exTbls, *autGenKeyList, *deprecated, *queryer, *contextOnly)
 	if err != nil {
 		log.Fatal(err)
 	}
