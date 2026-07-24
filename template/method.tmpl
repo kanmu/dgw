@@ -2,6 +2,9 @@
 {{- if .Struct.Deprecated }}
 // %EMPTY_COMMENT%
 // Deprecated: {{ .Struct.Name }} is no longer maintained
+{{- else }}
+// %EMPTY_COMMENT%
+// Deprecated: Use CreateContext instead.
 {{- end }}
 func (r *{{ .Struct.Name }}) Create(db {{ .Struct.Queryer }}) error {
   return r.CreateContext(context.Background(), db)
@@ -11,6 +14,9 @@ func (r *{{ .Struct.Name }}) Create(db {{ .Struct.Queryer }}) error {
 {{- if .Struct.Deprecated }}
 //
 // Deprecated: {{ .Struct.Name }} is no longer maintained
+{{- else }}
+//
+// Deprecated: Use Get{{ .Struct.Name }}ByPkContext instead.
 {{- end }}
 func Get{{ .Struct.Name }}ByPk(db {{ .Struct.Queryer }}, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
   return Get{{ .Struct.Name }}ByPkContext(context.Background(), db, {{ createSelectByPkSQLParams .Struct }})
