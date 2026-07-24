@@ -251,11 +251,15 @@ func TestMethodGeneration(t *testing.T) {
 		{
 			table: tbls[0],
 			expect: `// Create inserts the T1 to the database.
+// %EMPTY_COMMENT%
+// Deprecated: Use CreateContext instead.
 func (r *T1) Create(db Queryer) error {
         return r.CreateContext(context.Background(), db)
 }
 
 // GetT1ByPk select the T1 from the database.
+//
+// Deprecated: Use GetT1ByPkContext instead.
 func GetT1ByPk(db Queryer, pk0 int64) (*T1, error) {
         return GetT1ByPkContext(context.Background(), db, pk0)
 }
@@ -305,11 +309,15 @@ func GetT1ByPkContext(ctx context.Context, db Queryer, pk0 int64) (*T1, error) {
 		{
 			table: tbls[1],
 			expect: `// Create inserts the T2 to the database.
+// %EMPTY_COMMENT%
+// Deprecated: Use CreateContext instead.
 func (r *T2) Create(db Queryer) error {
         return r.CreateContext(context.Background(), db)
 }
 
 // GetT2ByPk select the T2 from the database.
+//
+// Deprecated: Use GetT2ByPkContext instead.
 func GetT2ByPk(db Queryer, pk0 int64) (*T2, error) {
         return GetT2ByPkContext(context.Background(), db, pk0)
 }
@@ -358,11 +366,15 @@ func GetT2ByPkContext(ctx context.Context, db Queryer, pk0 int64) (*T2, error) {
 		{
 			table: tbls[2],
 			expect: `// Create inserts the T3 to the database.
+// %EMPTY_COMMENT%
+// Deprecated: Use CreateContext instead.
 func (r *T3) Create(db Queryer) error {
         return r.CreateContext(context.Background(), db)
 }
 
 // GetT3ByPk select the T3 from the database.
+//
+// Deprecated: Use GetT3ByPkContext instead.
 func GetT3ByPk(db Queryer, pk0 int64, pk1 int) (*T3, error) {
         return GetT3ByPkContext(context.Background(), db, pk0, pk1)
 }
@@ -411,11 +423,15 @@ func GetT3ByPkContext(ctx context.Context, db Queryer, pk0 int64, pk1 int) (*T3,
 		{
 			table: tbls[3],
 			expect: `// Create inserts the T4 to the database.
+// %EMPTY_COMMENT%
+// Deprecated: Use CreateContext instead.
 func (r *T4) Create(db Queryer) error {
         return r.CreateContext(context.Background(), db)
 }
 
 // GetT4ByPk select the T4 from the database.
+//
+// Deprecated: Use GetT4ByPkContext instead.
 func GetT4ByPk(db Queryer, pk0 int, pk1 int) (*T4, error) {
         return GetT4ByPkContext(context.Background(), db, pk0, pk1)
 }
@@ -508,11 +524,15 @@ type T1 struct {
 	Tm          *time.Time     // tm
 }
 // Create inserts the T1 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T1) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT1ByPk select the T1 from the database.
+//
+// Deprecated: Use GetT1ByPkContext instead.
 func GetT1ByPk(db Queryer, pk0 int64) (*T1, error) {
 	return GetT1ByPkContext(context.Background(), db, pk0)
 }
@@ -565,11 +585,15 @@ type T2 struct {
 	TWithoutTz time.Time // t_without_tz
 }
 // Create inserts the T2 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T2) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT2ByPk select the T2 from the database.
+//
+// Deprecated: Use GetT2ByPkContext instead.
 func GetT2ByPk(db Queryer, pk0 int64) (*T2, error) {
 	return GetT2ByPkContext(context.Background(), db, pk0)
 }
@@ -622,11 +646,15 @@ type T3 struct {
 	TWithoutTz time.Time // t_without_tz
 }
 // Create inserts the T3 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T3) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT3ByPk select the T3 from the database.
+//
+// Deprecated: Use GetT3ByPkContext instead.
 func GetT3ByPk(db Queryer, pk0 int64, pk1 int) (*T3, error) {
 	return GetT3ByPkContext(context.Background(), db, pk0, pk1)
 }
@@ -676,11 +704,15 @@ type T4 struct {
 	I  int // i
 }
 // Create inserts the T4 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T4) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT4ByPk select the T4 from the database.
+//
+// Deprecated: Use GetT4ByPkContext instead.
 func GetT4ByPk(db Queryer, pk0 int, pk1 int) (*T4, error) {
 	return GetT4ByPkContext(context.Background(), db, pk0, pk1)
 }
@@ -730,11 +762,15 @@ type T5 struct {
 	I  int // i
 }
 // Create inserts the T5 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T5) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT5ByPk select the T5 from the database.
+//
+// Deprecated: Use GetT5ByPkContext instead.
 func GetT5ByPk(db Queryer, pk0 int, pk1 int) (*T5, error) {
 	return GetT5ByPkContext(context.Background(), db, pk0, pk1)
 }
@@ -784,11 +820,15 @@ type T6 struct {
 	I  int // i
 }
 // Create inserts the T6 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T6) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT6ByPk select the T6 from the database.
+//
+// Deprecated: Use GetT6ByPkContext instead.
 func GetT6ByPk(db Queryer, pk0 int, pk1 int) (*T6, error) {
 	return GetT6ByPkContext(context.Background(), db, pk0, pk1)
 }
@@ -863,11 +903,15 @@ type T1 struct {
 	Tm          *time.Time     // tm
 }
 // Create inserts the T1 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T1) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT1ByPk select the T1 from the database.
+//
+// Deprecated: Use GetT1ByPkContext instead.
 func GetT1ByPk(db Queryer, pk0 int64) (*T1, error) {
 	return GetT1ByPkContext(context.Background(), db, pk0)
 }
@@ -920,11 +964,15 @@ type T2 struct {
 	TWithoutTz time.Time // t_without_tz
 }
 // Create inserts the T2 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T2) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT2ByPk select the T2 from the database.
+//
+// Deprecated: Use GetT2ByPkContext instead.
 func GetT2ByPk(db Queryer, pk0 int64) (*T2, error) {
 	return GetT2ByPkContext(context.Background(), db, pk0)
 }
@@ -977,11 +1025,15 @@ type T3 struct {
 	TWithoutTz time.Time // t_without_tz
 }
 // Create inserts the T3 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T3) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT3ByPk select the T3 from the database.
+//
+// Deprecated: Use GetT3ByPkContext instead.
 func GetT3ByPk(db Queryer, pk0 int64, pk1 int) (*T3, error) {
 	return GetT3ByPkContext(context.Background(), db, pk0, pk1)
 }
@@ -1031,11 +1083,15 @@ type T4 struct {
 	I  int // i
 }
 // Create inserts the T4 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T4) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT4ByPk select the T4 from the database.
+//
+// Deprecated: Use GetT4ByPkContext instead.
 func GetT4ByPk(db Queryer, pk0 int, pk1 int) (*T4, error) {
 	return GetT4ByPkContext(context.Background(), db, pk0, pk1)
 }
@@ -1085,11 +1141,15 @@ type T5 struct {
 	I  int // i
 }
 // Create inserts the T5 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T5) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT5ByPk select the T5 from the database.
+//
+// Deprecated: Use GetT5ByPkContext instead.
 func GetT5ByPk(db Queryer, pk0 int, pk1 int) (*T5, error) {
 	return GetT5ByPkContext(context.Background(), db, pk0, pk1)
 }
@@ -1139,11 +1199,15 @@ type T6 struct {
 	I  int // i
 }
 // Create inserts the T6 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T6) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT6ByPk select the T6 from the database.
+//
+// Deprecated: Use GetT6ByPkContext instead.
 func GetT6ByPk(db Queryer, pk0 int, pk1 int) (*T6, error) {
 	return GetT6ByPkContext(context.Background(), db, pk0, pk1)
 }
@@ -1219,11 +1283,15 @@ type T1 struct {
 	Tm          *time.Time     // tm
 }
 // Create inserts the T1 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T1) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT1ByPk select the T1 from the database.
+//
+// Deprecated: Use GetT1ByPkContext instead.
 func GetT1ByPk(db Queryer, pk0 int64) (*T1, error) {
 	return GetT1ByPkContext(context.Background(), db, pk0)
 }
@@ -1345,11 +1413,15 @@ type T3 struct {
 	TWithoutTz time.Time // t_without_tz
 }
 // Create inserts the T3 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T3) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT3ByPk select the T3 from the database.
+//
+// Deprecated: Use GetT3ByPkContext instead.
 func GetT3ByPk(db Queryer, pk0 int64, pk1 int) (*T3, error) {
 	return GetT3ByPkContext(context.Background(), db, pk0, pk1)
 }
@@ -1399,11 +1471,15 @@ type T4 struct {
 	I  int // i
 }
 // Create inserts the T4 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T4) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT4ByPk select the T4 from the database.
+//
+// Deprecated: Use GetT4ByPkContext instead.
 func GetT4ByPk(db Queryer, pk0 int, pk1 int) (*T4, error) {
 	return GetT4ByPkContext(context.Background(), db, pk0, pk1)
 }
@@ -1519,11 +1595,15 @@ type T6 struct {
 	I  int // i
 }
 // Create inserts the T6 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T6) Create(db Queryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT6ByPk select the T6 from the database.
+//
+// Deprecated: Use GetT6ByPkContext instead.
 func GetT6ByPk(db Queryer, pk0 int, pk1 int) (*T6, error) {
 	return GetT6ByPkContext(context.Background(), db, pk0, pk1)
 }
@@ -1596,11 +1676,15 @@ type T1 struct {
 	Tm          *time.Time     // tm
 }
 // Create inserts the T1 to the database.
+//
+// Deprecated: Use CreateContext instead.
 func (r *T1) Create(db MyQueryer) error {
 	return r.CreateContext(context.Background(), db)
 }
 
 // GetT1ByPk select the T1 from the database.
+//
+// Deprecated: Use GetT1ByPkContext instead.
 func GetT1ByPk(db MyQueryer, pk0 int64) (*T1, error) {
 	return GetT1ByPkContext(context.Background(), db, pk0)
 }
