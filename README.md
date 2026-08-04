@@ -34,6 +34,8 @@ Flags:
   -k, --autogenkey=AUTOGENKEY ...
                              auto generate key list
   -x, --exclude=EXCLUDE ...  table names to exclude
+  -X, --exclude-column=EXCLUDE-COLUMN ...
+                             column names to exclude in "table.column" format
       --template=TEMPLATE    custom template path
   -o, --output=OUTPUT        output file path
       --no-interface         output without Queryer interface
@@ -49,6 +51,22 @@ Args:
 ```
 dgw postgres://dbuser@localhost/dbname?sslmode=disable
 ```
+
+### Excluding columns
+
+`--exclude-column` (`-X`) drops a column from the generated struct field, and from the
+generated `INSERT`/`SELECT` statements. It must be given in `table.column` format, so a bare
+column name is rejected. Pass the flag multiple times to exclude more than one column.
+
+```
+dgw postgres://dbuser@localhost/dbname?sslmode=disable -X t1.nullable_str -X t1.xml_data
+```
+
+`dgw` stops with an error, instead of generating broken code, when the exclusion is:
+
+- a primary key column (`GetXByPk` would no longer match the table)
+- a table or column which does not exist in the schema (usually a typo)
+- every column of a table (use `--exclude` to skip the whole table)
 
 ## Example
 

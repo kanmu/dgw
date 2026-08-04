@@ -43,7 +43,7 @@ func testSetupStruct(t *testing.T, conn *sql.DB) []*Struct {
 
 	var sts []*Struct
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -123,7 +123,7 @@ func TestPgTableToStruct(t *testing.T) {
 	}
 
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -145,7 +145,7 @@ func TestPgTableToMethod(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -176,7 +176,7 @@ func TestPgExecuteCustomTemplate(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tbl := range tbls {
-		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
+		st, err := PgTableToStruct(tbl, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -479,7 +479,7 @@ func GetT4ByPkContext(ctx context.Context, db Queryer, pk0 int, pk1 int) (*T4, e
 	}
 	for _, tt := range tests {
 		t.Run(tt.table.Name, func(t *testing.T) {
-			st, err := PgTableToStruct(tt.table, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "")
+			st, err := PgTableToStruct(tt.table, &defaultTypeMapCfg, autoGenKeyCfg, []string{}, "", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -504,7 +504,7 @@ func TestPgCreateStruct(t *testing.T) {
 	assert := assert.New(t)
 
 	schema := "public"
-	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, []string{}, "")
+	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, []string{}, []string{}, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -883,7 +883,7 @@ func TestPgCreateStructWithAutoGenKey(t *testing.T) {
 	assert := assert.New(t)
 
 	schema := "public"
-	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{"smallserial", "serial", "bigserial", "autogenuuid", "integer"}, []string{}, "")
+	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, []string{"smallserial", "serial", "bigserial", "autogenuuid", "integer"}, []string{}, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1263,7 +1263,7 @@ func TestPgCreateStructWithDeprecated(t *testing.T) {
 
 	schema := "public"
 	deprecated := []string{"t2", "t5"}
-	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, deprecated, "")
+	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, []string{}, deprecated, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1659,7 +1659,7 @@ func TestPgCreateStructWithQueryer(t *testing.T) {
 
 	schema := "public"
 	deprecated := []string{"t2", "t5"}
-	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, deprecated, "MyQueryer")
+	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, []string{}, []string{}, deprecated, "MyQueryer")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1731,4 +1731,149 @@ func GetT1ByPkContext(ctx context.Context, db MyQueryer, pk0 int64) (*T1, error)
 `
 
 	assert.Contains(string(src), expected)
+}
+
+func TestNewExcludeColumns(t *testing.T) {
+	assert := assert.New(t)
+
+	ex, err := NewExcludeColumns([]string{"t1.str", "t1.tm", "t2.str"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.True(ex.Contains("t1", "str"))
+	assert.True(ex.Contains("t1", "tm"))
+	assert.True(ex.Contains("t2", "str"))
+	// exclusion must not cross the table boundary
+	assert.False(ex.Contains("t2", "tm"))
+	assert.False(ex.Contains("t3", "str"))
+	assert.False(ex.Contains("t1", "id"))
+
+	// no exclusion at all
+	ex, err = NewExcludeColumns([]string{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.False(ex.Contains("t1", "str"))
+
+	var nilEx *ExcludeColumns
+	assert.False(nilEx.Contains("t1", "str"))
+
+	// a column name without a table name is not allowed
+	for _, spec := range []string{"str", "t1.", ".str", "", "."} {
+		if _, err := NewExcludeColumns([]string{spec}); err == nil {
+			t.Errorf("expected error for spec %q, got nil", spec)
+		}
+	}
+}
+
+func TestExcludeColumnsValidate(t *testing.T) {
+	tbls := []*PgTable{
+		{
+			Schema: "public",
+			Name:   "t1",
+			Columns: []*PgColumn{
+				{Name: "id", IsPrimaryKey: true},
+				{Name: "str"},
+				{Name: "tm"},
+			},
+		},
+		{
+			Schema: "public",
+			Name:   "t_nopk",
+			Columns: []*PgColumn{
+				{Name: "a"},
+				{Name: "b"},
+			},
+		},
+	}
+
+	tests := []struct {
+		name   string
+		specs  []string
+		errStr string
+	}{
+		{"valid", []string{"t1.str", "t1.tm", "t_nopk.a"}, ""},
+		{"unknown table", []string{"t2.str"}, "no such table t2"},
+		{"unknown column", []string{"t1.nosuch"}, "no such column t1.nosuch"},
+		{"primary key", []string{"t1.id"}, "cannot exclude primary key column t1.id"},
+		{"all columns", []string{"t_nopk.a", "t_nopk.b"}, "all columns of t_nopk are excluded"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ex, err := NewExcludeColumns(tt.specs)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = ex.Validate(tbls)
+			if tt.errStr == "" {
+				assert.NoError(t, err)
+				return
+			}
+			assert.ErrorContains(t, err, tt.errStr)
+		})
+	}
+
+	var nilEx *ExcludeColumns
+	assert.NoError(t, nilEx.Validate(tbls))
+}
+
+func TestPgCreateStructWithExcludeColumn(t *testing.T) {
+	conn, cleanup := testPgSetup(t)
+	defer cleanup()
+	assert := assert.New(t)
+
+	schema := "public"
+	exCols := []string{"t1.nullable_str", "t1.tm"}
+	src, err := PgCreateStruct(conn, schema, "", "mypkg", "", []string{}, exCols, []string{}, []string{}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	srcStr := string(src)
+
+	// compare ignoring gofmt alignment
+	re := regexp.MustCompile(`\s`)
+	expectedStruct := `// T1 represents public.t1
+type T1 struct {
+	ID int64 // id
+	I int // i
+	Str string // str
+	TWithTz time.Time // t_with_tz
+	TWithoutTz time.Time // t_without_tz
+}`
+	assert.Contains(re.ReplaceAllString(srcStr, ""), re.ReplaceAllString(expectedStruct, ""))
+
+	// the excluded columns are gone from the generated SQL and the scan/param lists
+	assert.Contains(srcStr, "INSERT INTO t1 (i, str, t_with_tz, t_without_tz) VALUES ($1, $2, $3, $4) RETURNING id")
+	assert.Contains(srcStr, "SELECT id, i, str, t_with_tz, t_without_tz FROM t1 WHERE id = $1")
+	assert.Contains(srcStr, "&r.I, &r.Str, &r.TWithTz, &r.TWithoutTz).Scan(&r.ID)")
+	assert.Contains(srcStr, "pk0).Scan(&r.ID, &r.I, &r.Str, &r.TWithTz, &r.TWithoutTz)")
+	assert.NotContains(srcStr, "nullable_str")
+	assert.NotContains(srcStr, "NullableStr")
+	assert.NotContains(srcStr, "&r.Tm")
+
+	// other tables are not affected
+	assert.Contains(srcStr, "INSERT INTO t2 (i, str, t_with_tz, t_without_tz) VALUES ($1, $2, $3, $4) RETURNING id")
+	assert.Contains(srcStr, "SELECT id, i, str, t_with_tz, t_without_tz FROM t2 WHERE id = $1")
+}
+
+func TestPgCreateStructWithInvalidExcludeColumn(t *testing.T) {
+	conn, cleanup := testPgSetup(t)
+	defer cleanup()
+
+	tests := []struct {
+		name   string
+		exCols []string
+		errStr string
+	}{
+		{"primary key", []string{"t1.id"}, "cannot exclude primary key column t1.id"},
+		{"unknown column", []string{"t1.nosuch"}, "no such column t1.nosuch"},
+		{"unknown table", []string{"nosuch.str"}, "no such table nosuch"},
+		{"without table name", []string{"nullable_str"}, `invalid exclude column "nullable_str"`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := PgCreateStruct(conn, "public", "", "mypkg", "", []string{}, tt.exCols, []string{}, []string{}, "")
+			assert.ErrorContains(t, err, tt.errStr)
+		})
+	}
 }
