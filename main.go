@@ -18,6 +18,7 @@ var (
 	typeMapFilePath  = kingpin.Flag("typemap", "column type and go type map file path").Short('t').String()
 	autGenKeyList    = kingpin.Flag("autogenkey", "auto generate key list").Short('k').Strings()
 	exTbls           = kingpin.Flag("exclude", "table names to exclude").Short('x').Strings()
+	exCols           = kingpin.Flag("exclude-column", `column names to exclude in "table.column" format`).Short('X').Strings()
 	customTmpl       = kingpin.Flag("template", "custom template path").String()
 	outFile          = kingpin.Flag("output", "output file path").Short('o').String()
 	noQueryInterface = kingpin.Flag("no-interface", "output without Queryer interface").Bool()
@@ -38,7 +39,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	st, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName, *customTmpl, *exTbls, *autGenKeyList, *deprecated, *queryer)
+	st, err := PgCreateStruct(conn, *schema, *typeMapFilePath, *pkgName, *customTmpl, *exTbls, *exCols, *autGenKeyList, *deprecated, *queryer)
 	if err != nil {
 		log.Fatal(err)
 	}
